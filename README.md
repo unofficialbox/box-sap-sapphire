@@ -64,6 +64,49 @@ curl http://localhost:8001/.well-known/agent.json
 curl http://localhost:8002/.well-known/agent.json
 ```
 
+## Testing with A2A Inspector
+
+The [A2A Inspector](https://github.com/google-a2a/a2a-inspector) is a web-based debugging tool for the A2A protocol. It lets you connect to any A2A agent, inspect its agent card, send messages via an interactive chat UI, and view the raw JSON-RPC traffic in a console panel. All responses are validated against the A2A spec in real time.
+
+**Option 1: Hosted version (no install)**
+
+Go to [a2ainspect.com](https://a2ainspect.com/), enter `http://localhost:8000` as the agent URL, and start chatting.
+
+**Option 2: Run locally**
+
+```bash
+git clone https://github.com/google-a2a/a2a-inspector.git
+cd a2a-inspector
+uv sync
+
+# Terminal 1 — frontend
+cd frontend && npm install && npm run dev
+
+# Terminal 2 — backend
+uv run a2a-inspector
+```
+
+Then open `http://127.0.0.1:5001` in your browser, enter `http://localhost:8000` as the agent URL, and click **Connect**. You can also connect directly to the sub-agents at `:8001` (SAP) or `:8002` (Box).
+
+**Option 3: curl**
+
+```bash
+curl -s -X POST http://localhost:8000/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "message/send",
+    "id": "1",
+    "params": {
+      "message": {
+        "role": "user",
+        "parts": [{"kind": "text", "text": "Show me all open CAPAs"}],
+        "messageId": "msg-1"
+      }
+    }
+  }'
+```
+
 ## Example Prompts
 
 ```
