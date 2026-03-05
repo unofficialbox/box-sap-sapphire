@@ -1,0 +1,20 @@
+[project]
+name = "box-sap-sapphire"
+version = "0.1.0"
+description = "SAP Sapphire demo - FDA QMSR / ISO 13485 multi-agent A2A system"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "a2a>=0.44",
+    "a2a-sdk>=0.3.24",
+    "google-adk>=1.13.0",
+    "litellm>=1.76.1",
+    "python-dotenv",
+    "box-ai-agents-toolkit",
+    "box-sdk-gen",
+    "boxsdk>=3.14.0",
+    "fastmcp",
+    "google-cloud-bigtable>=2.26.0",
+    "click",
+    "uvicorn",
+]
