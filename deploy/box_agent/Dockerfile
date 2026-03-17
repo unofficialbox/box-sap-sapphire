@@ -14,7 +14,7 @@ COPY --chown=myuser:myuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy agent source into a subdirectory (ADK expects parent/agent_name/ structure)
-COPY --chown=myuser:myuser agent.py box_tools.py .env agent.json __init__.py ./agents/box_agent/
+COPY --chown=myuser:myuser agent.py box_tools.py agent.json __init__.py ./agents/box_agent/
 
 ENV PORT=8080
 EXPOSE 8080

@@ -33,7 +33,6 @@ class BigTableClient:
         return cls._instance
 
     def __init__(self):
-        os.environ.setdefault("BIGTABLE_EMULATOR_HOST", "localhost:8086")
         self._client = bigtable.Client(project=PROJECT_ID, admin=False)
         self._bt_instance = self._client.instance(INSTANCE_ID)
         logger.info("BigTable client initialized (project=%s, instance=%s)", PROJECT_ID, INSTANCE_ID)

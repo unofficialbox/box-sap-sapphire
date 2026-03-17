@@ -1,7 +1,7 @@
 {
   "name": "sap_agent",
   "description": "An agent that queries SAP Quality Management data including quality notifications (CAPAs), quality info records, and controlled documents for medical device manufacturing.",
-  "url": "https://sap-agent-861178164155.us-central1.run.app/a2a/sap_agent",
+  "url": "https://sap-agent-268814066700.us-central1.run.app/a2a/sap_agent",
   "version": "1.0.0",
   "defaultInputModes": ["text/plain"],
   "defaultOutputModes": ["text/plain"],

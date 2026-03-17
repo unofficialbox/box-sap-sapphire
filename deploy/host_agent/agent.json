@@ -1,7 +1,7 @@
 {
   "name": "Quality Management Orchestator",
   "description": "Orchestrates quality management workflows across SAP and Box systems for CAPA tracking, document management, and QMSR compliance.",
-  "url": "https://host-agent-861178164155.us-central1.run.app/a2a/host_agent",
+  "url": "https://host-agent-268814066700.us-central1.run.app/a2a/host_agent",
   "version": "1.0.0",
   "defaultInputModes": ["text/plain"],
   "defaultOutputModes": ["text/plain"],
