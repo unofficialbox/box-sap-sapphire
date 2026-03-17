@@ -1,0 +1,26 @@
+{
+  "name": "Quality Management Orchestator",
+  "description": "Orchestrates quality management workflows across SAP and Box systems for CAPA tracking, document management, and QMSR compliance.",
+  "url": "https://host-agent-861178164155.us-central1.run.app/a2a/host_agent",
+  "version": "1.0.0",
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "capabilities": {
+    "streaming": false
+  },
+  "skills": [
+    {
+      "id": "quality_management",
+      "name": "Quality Management Orchestrator",
+      "description": "Routes quality management queries to SAP and Box agents for CAPA tracking, document management, and QMSR compliance",
+      "tags": ["quality", "capa", "qmsr", "iso13485", "fda", "documents", "sap", "box"],
+      "examples": [
+        "Show me all open CAPAs",
+        "What documents were updated for CAPA 000300000005?",
+        "What does our incoming inspection SOP say about trace metals?",
+        "Show me supplier quality issues for RM-00078234",
+        "What preventive actions are still in process?"
+      ]
+    }
+  ]
+}

@@ -21,6 +21,14 @@ from box_ai_agents_toolkit import (  # noqa: E402
     box_ai_ask_file_multi,
     box_ai_ask_file_single,
     box_ai_ask_hub,
+    box_docgen_create_batch,
+    box_docgen_create_single_file_from_user_input,
+    box_docgen_get_job_by_id,
+    box_docgen_list_jobs_by_batch,
+    box_docgen_template_get_by_id,
+    box_docgen_template_get_by_name,
+    box_docgen_template_list,
+    box_docgen_template_list_tags,
     box_file_info,
     box_file_text_extract,
     box_file_upload,
@@ -387,3 +395,273 @@ def ask_box_ai_hub(
     except Exception as e:
         logger.error("ask_box_ai_hub failed: %s", e)
         return {"status": "error", "error_message": str(e), "hub_id": hub_id}
+
+
+# ── Box DocGen Operations ─────────────────────────────────────────────
+
+
+def list_docgen_templates(
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """List all available Box DocGen templates.
+
+    Returns:
+        dict with status and list of DocGen templates with id, name, and details.
+    """
+    try:
+        logger.info("list_docgen_templates")
+        client = _get_client()
+
+        results = box_docgen_template_list(client)
+
+        logger.info("list_docgen_templates: found %d templates", len(results))
+        return {"status": "success", "count": len(results), "templates": results}
+
+    except Exception as e:
+        logger.error("list_docgen_templates failed: %s", e)
+        return {"status": "error", "error_message": str(e)}
+
+
+def get_docgen_template_by_id(
+    template_id: str,
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """Get details of a specific Box DocGen template by its ID.
+
+    Args:
+        template_id: The Box file ID of the DocGen template.
+
+    Returns:
+        dict with status and template metadata.
+    """
+    try:
+        logger.info("get_docgen_template_by_id: %s", template_id)
+        client = _get_client()
+
+        result = box_docgen_template_get_by_id(client, template_id)
+
+        logger.info("get_docgen_template_by_id: retrieved %s", template_id)
+        return {"status": "success", **result}
+
+    except Exception as e:
+        logger.error("get_docgen_template_by_id failed: %s", e)
+        return {"status": "error", "error_message": str(e), "template_id": template_id}
+
+
+def get_docgen_template_by_name(
+    template_name: str,
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """Get details of a specific Box DocGen template by its name.
+
+    Args:
+        template_name: The name of the DocGen template to find.
+
+    Returns:
+        dict with status and template metadata.
+    """
+    try:
+        logger.info("get_docgen_template_by_name: %s", template_name)
+        client = _get_client()
+
+        result = box_docgen_template_get_by_name(client, template_name)
+
+        logger.info("get_docgen_template_by_name: found '%s'", template_name)
+        return {"status": "success", **result}
+
+    except Exception as e:
+        logger.error("get_docgen_template_by_name failed: %s", e)
+        return {"status": "error", "error_message": str(e), "template_name": template_name}
+
+
+def get_docgen_template_tags(
+    template_id: str,
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """List all tags (merge fields/placeholders) for a Box DocGen template.
+
+    Use this to discover what data fields a template expects before generating a document.
+
+    Args:
+        template_id: The Box file ID of the DocGen template.
+
+    Returns:
+        dict with status and list of template tags (field names and types).
+    """
+    try:
+        logger.info("get_docgen_template_tags: %s", template_id)
+        client = _get_client()
+
+        results = box_docgen_template_list_tags(client, template_id)
+
+        logger.info("get_docgen_template_tags: found %d tags for %s", len(results), template_id)
+        return {"status": "success", "template_id": template_id, "count": len(results), "tags": results}
+
+    except Exception as e:
+        logger.error("get_docgen_template_tags failed: %s", e)
+        return {"status": "error", "error_message": str(e), "template_id": template_id}
+
+
+def generate_document(
+    template_id: str,
+    destination_folder_id: str,
+    user_input: str,
+    generated_file_name: Optional[str] = None,
+    output_type: str = "pdf",
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """Generate a single document from a Box DocGen template.
+
+    Merges the provided data into a DocGen template and produces an output document
+    (PDF or DOCX) in the specified destination folder.
+
+    Args:
+        template_id: The Box file ID of the DocGen template.
+        destination_folder_id: The Box folder ID where the generated document will be saved.
+        user_input: JSON string of key-value pairs to merge into the template fields.
+        generated_file_name: Optional name for the output file (without extension).
+        output_type: Output format — 'pdf' or 'docx' (defaults to 'pdf').
+
+    Returns:
+        dict with status and the generated document batch/job details.
+    """
+    import json as _json
+
+    try:
+        logger.info(
+            "generate_document: template=%s folder=%s output=%s",
+            template_id, destination_folder_id, output_type,
+        )
+        client = _get_client()
+
+        # Parse user_input from JSON string to dict
+        if isinstance(user_input, str):
+            input_data = _json.loads(user_input)
+        else:
+            input_data = user_input
+
+        result = box_docgen_create_single_file_from_user_input(
+            client,
+            docgen_template_id=template_id,
+            destination_folder_id=destination_folder_id,
+            user_input=input_data,
+            generated_file_name=generated_file_name,
+            output_type=output_type,
+        )
+
+        logger.info("generate_document: batch created for template %s", template_id)
+        return {"status": "success", **result}
+
+    except _json.JSONDecodeError as e:
+        logger.error("generate_document: invalid JSON in user_input: %s", e)
+        return {"status": "error", "error_message": f"Invalid JSON in user_input: {e}"}
+    except Exception as e:
+        logger.error("generate_document failed: %s", e)
+        return {"status": "error", "error_message": str(e), "template_id": template_id}
+
+
+def generate_document_batch(
+    template_id: str,
+    destination_folder_id: str,
+    document_generation_data: str,
+    output_type: str = "pdf",
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """Generate multiple documents from a Box DocGen template in a single batch.
+
+    Each entry in document_generation_data produces a separate output document.
+
+    Args:
+        template_id: The Box file ID of the DocGen template.
+        destination_folder_id: The Box folder ID where generated documents will be saved.
+        document_generation_data: JSON string — an array of objects, each with
+            'generated_file_name' (str) and 'user_input' (dict of template field values).
+        output_type: Output format — 'pdf' or 'docx' (defaults to 'pdf').
+
+    Returns:
+        dict with status and the batch ID for tracking.
+    """
+    import json as _json
+
+    try:
+        logger.info(
+            "generate_document_batch: template=%s folder=%s output=%s",
+            template_id, destination_folder_id, output_type,
+        )
+        client = _get_client()
+
+        # Parse document_generation_data from JSON string to list
+        if isinstance(document_generation_data, str):
+            gen_data = _json.loads(document_generation_data)
+        else:
+            gen_data = document_generation_data
+
+        result = box_docgen_create_batch(
+            client,
+            docgen_template_id=template_id,
+            destination_folder_id=destination_folder_id,
+            document_generation_data=gen_data,
+            output_type=output_type,
+        )
+
+        logger.info("generate_document_batch: batch created for template %s", template_id)
+        return {"status": "success", **result}
+
+    except _json.JSONDecodeError as e:
+        logger.error("generate_document_batch: invalid JSON: %s", e)
+        return {"status": "error", "error_message": f"Invalid JSON in document_generation_data: {e}"}
+    except Exception as e:
+        logger.error("generate_document_batch failed: %s", e)
+        return {"status": "error", "error_message": str(e), "template_id": template_id}
+
+
+def get_docgen_job_status(
+    job_id: str,
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """Check the status of a Box DocGen job.
+
+    Args:
+        job_id: The ID of the DocGen job to check.
+
+    Returns:
+        dict with status and job details including processing state and output file info.
+    """
+    try:
+        logger.info("get_docgen_job_status: %s", job_id)
+        client = _get_client()
+
+        result = box_docgen_get_job_by_id(client, job_id)
+
+        logger.info("get_docgen_job_status: retrieved job %s", job_id)
+        return {"status": "success", **result}
+
+    except Exception as e:
+        logger.error("get_docgen_job_status failed: %s", e)
+        return {"status": "error", "error_message": str(e), "job_id": job_id}
+
+
+def list_docgen_batch_jobs(
+    batch_id: str,
+    tool_context: Optional[ToolContext] = None,
+) -> dict[str, Any]:
+    """List all jobs in a Box DocGen batch to check their status and output files.
+
+    Args:
+        batch_id: The ID of the DocGen batch.
+
+    Returns:
+        dict with status and list of jobs in the batch.
+    """
+    try:
+        logger.info("list_docgen_batch_jobs: %s", batch_id)
+        client = _get_client()
+
+        results = box_docgen_list_jobs_by_batch(client, batch_id)
+
+        logger.info("list_docgen_batch_jobs: found %d jobs in batch %s", len(results), batch_id)
+        return {"status": "success", "batch_id": batch_id, "count": len(results), "jobs": results}
+
+    except Exception as e:
+        logger.error("list_docgen_batch_jobs failed: %s", e)
+        return {"status": "error", "error_message": str(e), "batch_id": batch_id}

@@ -1,18 +1,19 @@
-"""Host agent tool wrappers for calling remote A2A agents.
+"""QMS Orchestrator tool wrappers for calling remote A2A agents.
 
-These tools allow the host LLM to call sub-agents as function calls,
+These tools allow the orchestrator LLM to call sub-agents as function calls,
 enabling multi-step workflows where both agents are called sequentially.
 """
 
 import json
 import logging
+import os
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-SAP_AGENT_URL = "http://localhost:8001"
-BOX_AGENT_URL = "http://localhost:8002"
+SAP_AGENT_URL = os.environ.get("SAP_AGENT_URL", "http://localhost:8001")
+BOX_AGENT_URL = os.environ.get("BOX_AGENT_URL", "http://localhost:8002")
 
 _counter = 0
 
@@ -23,7 +24,7 @@ def _next_id() -> str:
     return f"host-call-{_counter}"
 
 
-def _call_agent(url: str, query: str) -> str:
+async def _call_agent(url: str, query: str) -> str:
     """Send an A2A message/send request and return the agent's text response."""
     payload = {
         "jsonrpc": "2.0",
@@ -37,7 +38,8 @@ def _call_agent(url: str, query: str) -> str:
             }
         },
     }
-    resp = httpx.post(url, json=payload, timeout=120.0)
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        resp = await client.post(url, json=payload)
     data = resp.json()
     try:
         return data["result"]["artifacts"][0]["parts"][0]["text"]
@@ -45,7 +47,7 @@ def _call_agent(url: str, query: str) -> str:
         return json.dumps(data.get("result", data.get("error", data)), indent=2)
 
 
-def query_sap(query: str) -> dict:
+async def query_sap(query: str) -> dict:
     """Query the SAP Quality Management agent for CAPA, quality notification,
     quality info record, or controlled document data.
 
@@ -60,14 +62,14 @@ def query_sap(query: str) -> dict:
     """
     try:
         logger.info("query_sap: %s", query[:100])
-        result = _call_agent(SAP_AGENT_URL, query)
+        result = await _call_agent(SAP_AGENT_URL, query)
         return {"status": "success", "response": result}
     except Exception as e:
         logger.error("query_sap failed: %s", e)
         return {"status": "error", "error_message": str(e)}
 
 
-def query_box(query: str) -> dict:
+async def query_box(query: str) -> dict:
     """Query the Box document management agent to search files, read content,
     or ask Box AI questions about documents.
 
@@ -82,7 +84,7 @@ def query_box(query: str) -> dict:
     """
     try:
         logger.info("query_box: %s", query[:100])
-        result = _call_agent(BOX_AGENT_URL, query)
+        result = await _call_agent(BOX_AGENT_URL, query)
         return {"status": "success", "response": result}
     except Exception as e:
         logger.error("query_box failed: %s", e)

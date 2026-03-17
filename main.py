@@ -1,4 +1,4 @@
-"""Host Agent A2A application entry point.
+"""QMS Orchestrator A2A application entry point.
 
 Runs on port 8000 by default. Start with:
     uvicorn main:app --reload
@@ -11,18 +11,18 @@ from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
 from dotenv import load_dotenv
 
-from agent_executor import HostAgentExecutor
-from host_agent import create_agent_card, create_root_agent
+from agent_executor import QmsOrchestratorExecutor
+from qms_orchestrator import create_agent_card, create_root_agent
 
 load_dotenv()
 
 AGENT_URL = os.environ.get("AGENT_URL", "http://127.0.0.1:8000")
 
-host_agent = create_root_agent()
-agent_card = create_agent_card(host_agent, AGENT_URL)
+orchestrator = create_root_agent()
+agent_card = create_agent_card(orchestrator, AGENT_URL)
 
 request_handler = DefaultRequestHandler(
-    agent_executor=HostAgentExecutor(),
+    agent_executor=QmsOrchestratorExecutor(),
     task_store=InMemoryTaskStore(),
 )
 

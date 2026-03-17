@@ -17,9 +17,17 @@ from .box_tools import (
     ask_box_ai_multi,
     create_folder,
     find_ai_agent_by_name,
+    generate_document,
+    generate_document_batch,
+    get_docgen_job_status,
+    get_docgen_template_by_id,
+    get_docgen_template_by_name,
+    get_docgen_template_tags,
     get_file_content,
     get_file_info,
     get_folder_info,
+    list_docgen_batch_jobs,
+    list_docgen_templates,
     search_files,
     upload_file,
 )
@@ -154,6 +162,97 @@ def mcp_ask_ai_agent(
     try:
         logger.info("MCP: ask_ai_agent agent=%s item=%s/%s", agent_id, item_type, item_id)
         return ask_ai_agent(item_id, item_type, agent_id, prompt)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_list_docgen_templates() -> dict[str, Any]:
+    """List all available Box DocGen templates."""
+    try:
+        logger.info("MCP: list_docgen_templates")
+        return list_docgen_templates()
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_get_docgen_template_by_id(template_id: str) -> dict[str, Any]:
+    """Get details of a Box DocGen template by its ID."""
+    try:
+        logger.info("MCP: get_docgen_template_by_id %s", template_id)
+        return get_docgen_template_by_id(template_id)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_get_docgen_template_by_name(template_name: str) -> dict[str, Any]:
+    """Get details of a Box DocGen template by its name."""
+    try:
+        logger.info("MCP: get_docgen_template_by_name '%s'", template_name)
+        return get_docgen_template_by_name(template_name)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_get_docgen_template_tags(template_id: str) -> dict[str, Any]:
+    """List all tags (merge fields) for a Box DocGen template."""
+    try:
+        logger.info("MCP: get_docgen_template_tags %s", template_id)
+        return get_docgen_template_tags(template_id)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_generate_document(
+    template_id: str,
+    destination_folder_id: str,
+    user_input: str,
+    generated_file_name: Optional[str] = None,
+    output_type: str = "pdf",
+) -> dict[str, Any]:
+    """Generate a document from a Box DocGen template with provided data (JSON string)."""
+    try:
+        logger.info("MCP: generate_document template=%s", template_id)
+        return generate_document(template_id, destination_folder_id, user_input, generated_file_name, output_type)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_generate_document_batch(
+    template_id: str,
+    destination_folder_id: str,
+    document_generation_data: str,
+    output_type: str = "pdf",
+) -> dict[str, Any]:
+    """Generate multiple documents from a Box DocGen template in a batch (JSON string)."""
+    try:
+        logger.info("MCP: generate_document_batch template=%s", template_id)
+        return generate_document_batch(template_id, destination_folder_id, document_generation_data, output_type)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_get_docgen_job_status(job_id: str) -> dict[str, Any]:
+    """Check the status of a Box DocGen job."""
+    try:
+        logger.info("MCP: get_docgen_job_status %s", job_id)
+        return get_docgen_job_status(job_id)
+    except Exception as e:
+        return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
+
+
+@mcp.tool()
+def mcp_list_docgen_batch_jobs(batch_id: str) -> dict[str, Any]:
+    """List all jobs in a Box DocGen batch."""
+    try:
+        logger.info("MCP: list_docgen_batch_jobs %s", batch_id)
+        return list_docgen_batch_jobs(batch_id)
     except Exception as e:
         return {"status": "error", "error_type": "MCPException", "error_message": str(e)}
 

@@ -1,6 +1,6 @@
-"""Host Agent definition.
+"""QMS Orchestrator agent definition.
 
-Creates the root routing agent that delegates requests to
+Creates the root orchestrator agent that delegates requests to
 SAP and Box sub-agents via tool-based A2A calls.
 """
 
@@ -10,21 +10,21 @@ from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 
-from host_tools import query_box, query_sap
+from qms_orchestrator_tools import query_box, query_sap
 
 
 def create_root_agent() -> LlmAgent:
-    """Constructs the host routing agent with SAP and Box tools."""
-    model = os.getenv("LITELLM_MODEL", "gemini-2.5-flash")
+    """Constructs the QMS orchestrator agent with SAP and Box tools."""
+    model = os.getenv("LITELLM_MODEL", "anthropic/claude-opus-4-6")
     return LlmAgent(
         model=LiteLlm(model=model),
-        name="routing_agent",
+        name="qms_orchestrator",
         description="Orchestrates quality management workflows across SAP and Box systems",
         instruction="""You are a quality management orchestration agent for MedTech Precision Devices, Inc.
 
 You have two tools:
 - **query_sap**: Queries SAP Quality Management data (CAPAs, quality notifications, quality info records, controlled document metadata, CAPA actions).
-- **query_box**: Manages documents in Box (search files, read content, Box AI Q&A, upload, create folders).
+- **query_box**: Manages documents in Box (search files, read content, Box AI Q&A, upload, create folders, generate documents from DocGen templates).
 
 RULES:
 1. ALWAYS use your tools. Never answer from your own knowledge.
@@ -33,7 +33,7 @@ RULES:
 
 Routing guide:
 - SAP data (CAPAs, notifications, quality records, document metadata) → query_sap
-- Box files (search, read, AI Q&A, upload) → query_box
+- Box files (search, read, AI Q&A, upload, DocGen) → query_box
 - Both systems → call query_sap first, then call query_box
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",
@@ -43,9 +43,9 @@ Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 2
 
 
 def create_agent_card(agent, agent_url: str) -> AgentCard:
-    """Create the A2A agent card for the host agent."""
+    """Create the A2A agent card for the QMS orchestrator."""
     return AgentCard(
-        name=agent.name,
+        name="Quality Management Orchestator",
         description=agent.description,
         url=agent_url,
         version="1.0.0",

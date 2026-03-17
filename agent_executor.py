@@ -1,8 +1,10 @@
-"""Host Agent executor for A2A request handling.
+"""QMS Orchestrator executor for A2A request handling.
 
-Simpler executor pattern for the host/routing agent that delegates
+Executor pattern for the QMS orchestrator agent that delegates
 to sub-agents via the ADK Runner.
 """
+
+import asyncio
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
@@ -21,11 +23,13 @@ from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai.types import Content
 
-from host_agent import create_root_agent
+from qms_orchestrator import create_root_agent
+
+KEEPALIVE_INTERVAL = 15  # seconds between heartbeat status updates
 
 
-class HostAgentExecutor(AgentExecutor):
-    """Executor for the host routing agent."""
+class QmsOrchestratorExecutor(AgentExecutor):
+    """Executor for the QMS orchestrator agent."""
 
     def __init__(self):
         self._agent = create_root_agent()
@@ -72,6 +76,21 @@ class HostAgentExecutor(AgentExecutor):
 
         await updater.start_work()
 
+        # Background keepalive: sends periodic status updates so the SSE
+        # stream doesn't go silent during long tool executions.
+        keepalive_active = True
+
+        async def keepalive():
+            while keepalive_active:
+                await asyncio.sleep(KEEPALIVE_INTERVAL)
+                if keepalive_active:
+                    await updater.update_status(
+                        TaskState.working,
+                        message=new_agent_text_message("Processing..."),
+                    )
+
+        keepalive_task = asyncio.create_task(keepalive())
+
         try:
             async for event in self._runner.run_async(
                 user_id=self._user_id,
@@ -89,10 +108,26 @@ class HostAgentExecutor(AgentExecutor):
                             name="response",
                         )
                         await updater.complete()
+                elif event.content and event.content.parts:
+                    for part in event.content.parts:
+                        if hasattr(part, "function_call") and part.function_call:
+                            await updater.update_status(
+                                TaskState.working,
+                                message=new_agent_text_message(
+                                    f"Calling {part.function_call.name}..."
+                                ),
+                            )
         except Exception as e:
             await updater.failed(
                 message=new_agent_text_message(f"Task failed with error: {e}")
             )
+        finally:
+            keepalive_active = False
+            keepalive_task.cancel()
+            try:
+                await keepalive_task
+            except asyncio.CancelledError:
+                pass
 
     async def cancel(
         self, context: RequestContext, event_queue: EventQueue

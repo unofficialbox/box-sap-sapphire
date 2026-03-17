@@ -1,0 +1,439 @@
+{
+  "QMSR_Gap_Risk_Analysis": {
+    "report_id": "RPT-GAP-2026-001",
+    "company_name": "MedTech Precision Devices, Inc.",
+    "prepared_by": "Sarah Lee, Director of Quality Assurance",
+    "reviewed_by": "Michael Weber, Senior Quality Engineer",
+    "approved_by": "Dr. James Hartwell, VP Quality & Regulatory",
+    "report_date": "2026-01-15",
+    "qmsr_effective_date": "2026-02-02",
+    "assessment_scope": "Full QMS assessment against FDA QMSR (21 CFR 820 amended) incorporating ISO 13485:2016",
+    "classification": "CONFIDENTIAL",
+    "executive_summary": "This gap analysis identifies areas where the existing QMS under 21 CFR 820 (QSR) requires modification to comply with the FDA Quality Management System Regulation (QMSR), effective February 2, 2026. The QMSR amends 21 CFR Part 820 to incorporate ISO 13485:2016 by reference, fundamentally changing the regulatory framework for medical device quality systems. A total of 23 gaps were identified requiring ISO 13485 clause mapping updates across 1,840 controlled documents.",
+    "regulatory_background": "On February 2, 2026, the FDA QMSR takes effect, amending 21 CFR Part 820 to incorporate ISO 13485:2016 by reference. The most significant change is the removal of the §820.180(c) exemption, which previously shielded management review records, quality audit reports, and supplier audit reports from FDA inspection. These records are now fully inspectable.",
+    "regulatory_changes": [
+      {
+        "change_area": "§820.180(c) Exemption Removal",
+        "old_qsr_requirement": "Management review, audit, and supplier audit records exempt from FDA inspection",
+        "new_qmsr_requirement": "All records subject to FDA inspection per ISO 13485:2016 §4.2.5",
+        "impact_level": "CRITICAL"
+      },
+      {
+        "change_area": "QSIT Inspection Process",
+        "old_qsr_requirement": "Quality System Inspection Technique (QSIT) framework",
+        "new_qmsr_requirement": "New QSIT process aligned with ISO 13485:2016 structure",
+        "impact_level": "HIGH"
+      },
+      {
+        "change_area": "Risk Management Integration",
+        "old_qsr_requirement": "Risk analysis referenced but not ISO 14971 aligned",
+        "new_qmsr_requirement": "ISO 13485:2016 requires risk-based approach throughout QMS per §7.1",
+        "impact_level": "HIGH"
+      },
+      {
+        "change_area": "Document Structure",
+        "old_qsr_requirement": "QSR subpart structure (A through O)",
+        "new_qmsr_requirement": "ISO 13485:2016 clause structure (4 through 8)",
+        "impact_level": "MEDIUM"
+      }
+    ],
+    "gap_analysis_summary": "Analysis of the current QMS against ISO 13485:2016 requirements identified 23 gaps requiring remediation. Of these, 3 are classified as critical risk, 8 as high risk, and 12 as medium/low risk.",
+    "gap_items": [
+      {
+        "gap_id": "GAP-001",
+        "iso_clause": "4.2.4",
+        "qsr_reference": "§820.40",
+        "gap_description": "Document control procedure does not address §820.180(c) exemption removal — management review and audit records need updated retention and access controls",
+        "risk_rating": "CRITICAL",
+        "current_state": "Procedure revision in progress"
+      },
+      {
+        "gap_id": "GAP-002",
+        "iso_clause": "4.2.5",
+        "qsr_reference": "§820.180",
+        "gap_description": "Record retention policy does not specify minimum device lifetime per ISO 13485:2016",
+        "risk_rating": "CRITICAL",
+        "current_state": "Policy update drafted"
+      },
+      {
+        "gap_id": "GAP-003",
+        "iso_clause": "5.6",
+        "qsr_reference": "§820.20",
+        "gap_description": "Management review records not structured for FDA inspection readiness",
+        "risk_rating": "CRITICAL",
+        "current_state": "Under assessment"
+      },
+      {
+        "gap_id": "GAP-004",
+        "iso_clause": "7.1",
+        "qsr_reference": "§820.30",
+        "gap_description": "Risk-based approach not fully integrated into production planning per ISO 13485:2016 §7.1",
+        "risk_rating": "HIGH",
+        "current_state": "Risk management SOP being revised"
+      },
+      {
+        "gap_id": "GAP-005",
+        "iso_clause": "8.5.2",
+        "qsr_reference": "§820.90",
+        "gap_description": "CAPA procedure terminology not harmonized with ISO 13485:2016 §8.5.2 and §8.5.3",
+        "risk_rating": "HIGH",
+        "current_state": "Procedure revision completed"
+      }
+    ],
+    "total_gaps": "23",
+    "critical_gaps": "3",
+    "high_risk_gaps": "8",
+    "medium_low_gaps": "12",
+    "exemption_removal_impact": "The removal of §820.180(c) represents the most operationally significant change. Management review records, internal quality audit reports, and supplier audit reports — previously exempt from FDA inspection — must now be maintained in an inspection-ready state.",
+    "inspectable_records": [
+      {
+        "record_type": "Management Review Records",
+        "previous_status": "Exempt from FDA inspection under §820.180(c)",
+        "new_status": "Subject to FDA inspection per ISO 13485:2016 §5.6",
+        "compliance_action": "Review and restructure management review outputs for inspection readiness"
+      },
+      {
+        "record_type": "Internal Quality Audit Reports",
+        "previous_status": "Exempt from FDA inspection under §820.180(c)",
+        "new_status": "Subject to FDA inspection per ISO 13485:2016 §8.2.4",
+        "compliance_action": "Ensure audit reports contain required objective evidence and corrective actions"
+      },
+      {
+        "record_type": "Supplier Audit Reports",
+        "previous_status": "Exempt from FDA inspection under §820.180(c)",
+        "new_status": "Subject to FDA inspection per ISO 13485:2016 §7.4.1",
+        "compliance_action": "Update supplier audit procedure and report template for FDA accessibility"
+      }
+    ],
+    "recommendations": "1. Prioritize remediation of the 3 critical gaps related to §820.180(c) exemption removal before the QMSR effective date. 2. Complete ISO 13485 clause mapping for all 1,840 controlled documents. 3. Conduct training for all quality personnel on QMSR changes. 4. Update document templates to reference ISO 13485:2016 clause structure. 5. Establish a QMSR readiness review board to monitor remediation progress.",
+    "prepared_date": "2026-01-15",
+    "reviewed_date": "2026-01-18",
+    "approved_date": "2026-01-20"
+  },
+
+  "QMS_Document_Control_Report": {
+    "report_id": "RPT-DOC-2026-001",
+    "company_name": "MedTech Precision Devices, Inc.",
+    "generated_by": "Anika Kumar, Supplier Quality Manager",
+    "report_date": "2026-02-15",
+    "reporting_period": "January 2024 - February 2026",
+    "total_documents": "1840",
+    "documents_requiring_update": "23",
+    "classification": "CONTROLLED",
+    "document_control_summary": "This report provides a comprehensive inventory of all controlled documents within the Quality Management System, with specific focus on documents impacted by the FDA QMSR transition effective February 2, 2026.",
+    "total_controlled_documents": "1840",
+    "docs_referencing_old_qsr": "62",
+    "docs_requiring_iso_mapping": "23",
+    "docs_revised_for_qmsr": "20",
+    "docs_pending_review": "2",
+    "docs_in_draft": "1",
+    "docs_effective": "1837",
+    "documents": [
+      {
+        "document_id": "DOC-QMS-001",
+        "title": "Quality Manual",
+        "document_type": "QM",
+        "iso_reference": "4.2.2",
+        "revision_number": "08",
+        "status": "EFFECTIVE",
+        "effective_date": "2026-02-01"
+      },
+      {
+        "document_id": "DOC-QMS-002",
+        "title": "Control of Documents Procedure",
+        "document_type": "SOP",
+        "iso_reference": "4.2.4",
+        "revision_number": "06",
+        "status": "EFFECTIVE",
+        "effective_date": "2026-02-01"
+      },
+      {
+        "document_id": "DOC-QMS-004",
+        "title": "CAPA Procedure",
+        "document_type": "SOP",
+        "iso_reference": "8.5.2, 8.5.3",
+        "revision_number": "07",
+        "status": "EFFECTIVE",
+        "effective_date": "2026-02-01"
+      }
+    ],
+    "revision_requirement_summary": "The following documents have been identified as requiring revision to align with QMSR requirements, including updated ISO 13485:2016 clause references and removal of QSR-specific terminology.",
+    "documents_requiring_revision": [
+      {
+        "document_id": "DOC-QMS-001",
+        "title": "Quality Manual",
+        "change_reason": "Updated to align with FDA QMSR incorporating ISO 13485:2016; revised structure to match ISO clause numbering",
+        "capa_reference": "",
+        "target_date": "2026-01-15"
+      },
+      {
+        "document_id": "DOC-QMS-002",
+        "title": "Control of Documents Procedure",
+        "change_reason": "Revised to address QMSR removal of §820.180(c) exemption",
+        "capa_reference": "",
+        "target_date": "2026-01-20"
+      }
+    ],
+    "document_type_summary": [
+      {
+        "document_type": "Quality Manual (QM)",
+        "count": "1",
+        "percentage": "0.05%",
+        "last_review_date": "2026-01-15"
+      },
+      {
+        "document_type": "Standard Operating Procedure (SOP)",
+        "count": "15",
+        "percentage": "0.82%",
+        "last_review_date": "2026-01-28"
+      },
+      {
+        "document_type": "Work Instruction (WI)",
+        "count": "3",
+        "percentage": "0.16%",
+        "last_review_date": "2026-01-25"
+      },
+      {
+        "document_type": "Validation Protocol (VP)",
+        "count": "1",
+        "percentage": "0.05%",
+        "last_review_date": "2025-07-20"
+      }
+    ],
+    "compliance_notes": "All 20 documents requiring QMSR revision have been updated and approved prior to the February 2, 2026 effective date. One Work Instruction (WI-SOL-045123) remains in DRAFT status pending final process engineer review. All document revisions include updated ISO 13485:2016 cross-references and removal of obsolete QSR-specific language."
+  },
+
+  "CAPA_Completeness_Report": {
+    "report_id": "RPT-CAPA-2026-001",
+    "company_name": "MedTech Precision Devices, Inc.",
+    "prepared_by": "Michael Weber, Senior Quality Engineer",
+    "report_date": "2026-02-15",
+    "assessment_period": "March 2024 - February 2026 (24 months)",
+    "total_capas_assessed": "342",
+    "iso_reference": "ISO 13485:2016 §8.5.2, §8.5.3",
+    "classification": "CONFIDENTIAL",
+    "executive_summary": "This report assesses the completeness of all Corrective and Preventive Actions (CAPAs) within the 24-month assessment period in preparation for FDA QMSR compliance. Of 342 CAPAs assessed, 14 are missing effectiveness verification — a critical finding given the QMSR's enhanced inspection requirements under ISO 13485:2016.",
+    "total_capas": "342",
+    "open_capas": "47",
+    "closed_capas": "295",
+    "capas_corrective": "198",
+    "capas_preventive": "144",
+    "capas_missing_verification": "14",
+    "capas_past_due": "3",
+    "avg_closure_days": "62",
+    "capa_records": [
+      {
+        "notification_number": "000300000001",
+        "notification_type": "Q1 - Customer",
+        "description": "Customer complaint - surface scratches on housing unit",
+        "priority": "1",
+        "status": "COMPLETED",
+        "plant": "1000",
+        "creation_date": "2025-08-12"
+      },
+      {
+        "notification_number": "000300000002",
+        "notification_type": "Q2 - Vendor",
+        "description": "Vendor complaint - raw material out of spec viscosity",
+        "priority": "2",
+        "status": "COMPLETED",
+        "plant": "1000",
+        "creation_date": "2025-09-03"
+      },
+      {
+        "notification_number": "000300000005",
+        "notification_type": "Q2 - Vendor",
+        "description": "Vendor complaint - contamination in chemical raw material",
+        "priority": "1",
+        "status": "IN_PROCESS",
+        "plant": "1000",
+        "creation_date": "2025-12-05"
+      }
+    ],
+    "capa_tasks": [
+      {
+        "capa_number": "000300000001",
+        "task_description": "Rework affected units - re-polish and re-coat housing surfaces",
+        "responsible_person": "Michael Weber",
+        "task_type": "CORRECTIVE",
+        "task_status": "COMPLETED",
+        "completion_date": "2025-08-26"
+      },
+      {
+        "capa_number": "000300000001",
+        "task_description": "Implement automated surface inspection station after polishing step",
+        "responsible_person": "Michael Weber",
+        "task_type": "PREVENTIVE",
+        "task_status": "COMPLETED",
+        "completion_date": "2025-09-28"
+      },
+      {
+        "capa_number": "000300000005",
+        "task_description": "Require supplier to complete infrastructure audit and replace corroded piping",
+        "responsible_person": "Anika Kumar",
+        "task_type": "PREVENTIVE",
+        "task_status": "IN_PROCESS",
+        "completion_date": ""
+      }
+    ],
+    "missing_verification_summary": "The following 14 CAPAs have been closed but are missing required effectiveness verification per ISO 13485:2016 §8.5.2. This represents a compliance gap that must be addressed before FDA inspection under QMSR.",
+    "capas_missing_verification": [
+      {
+        "capa_number": "000300000007",
+        "description": "Packaging seal integrity failure on sterile product line",
+        "closed_date": "2025-06-15",
+        "days_since_closure": "245",
+        "assigned_to": "David Kim"
+      },
+      {
+        "capa_number": "000300000009",
+        "description": "Calibration drift on environmental monitoring sensors",
+        "closed_date": "2025-08-20",
+        "days_since_closure": "179",
+        "assigned_to": "Tina Chen"
+      }
+    ],
+    "compliance_assessment": "The CAPA system is largely compliant with ISO 13485:2016 §8.5.2 and §8.5.3 requirements. The primary compliance gap is the 14 CAPAs lacking effectiveness verification. Under the QMSR, FDA inspectors will have full access to CAPA records and may cite incomplete effectiveness verification as a nonconformity.",
+    "recommendations": "1. Immediately initiate effectiveness verification for all 14 identified CAPAs. 2. Establish a 90-day maximum timeline for effectiveness verification after CAPA closure. 3. Update the CAPA procedure to include automated alerts for overdue effectiveness verifications. 4. Conduct a management review of CAPA metrics to identify systemic improvement opportunities."
+  },
+
+  "Remediation_Plan": {
+    "plan_id": "REM-QMSR-2026-001",
+    "company_name": "MedTech Precision Devices, Inc.",
+    "prepared_by": "Sarah Lee, Director of Quality Assurance",
+    "reviewed_by": "Michael Weber, Senior Quality Engineer",
+    "approved_by": "Dr. James Hartwell, VP Quality & Regulatory",
+    "plan_date": "2026-01-20",
+    "target_completion_date": "2026-03-31",
+    "priority": "CRITICAL",
+    "approval_status": "APPROVED",
+    "executive_summary": "This remediation plan addresses all identified gaps between the current QMS and FDA QMSR requirements. The plan encompasses document updates, process changes, training, and system modifications required to achieve full compliance by March 31, 2026.",
+    "remediation_scope": "The remediation plan covers all gaps identified in the QMSR Gap and Risk Analysis (RPT-GAP-2026-001), document control updates from the QMS Document Control Report (RPT-DOC-2026-001), and CAPA completeness findings from the CAPA Completeness Report (RPT-CAPA-2026-001).",
+    "total_remediation_items": "47",
+    "document_updates_required": "23",
+    "process_changes_required": "12",
+    "training_requirements": "8",
+    "system_changes_required": "4",
+    "document_remediation_summary": "The following document remediation tasks address the 23 controlled documents requiring updates for QMSR compliance, including ISO 13485:2016 clause mapping and removal of QSR-specific references.",
+    "document_tasks": [
+      {
+        "task_id": "DOC-REM-001",
+        "document_id": "DOC-QMS-001",
+        "document_title": "Quality Manual",
+        "change_description": "Revise structure to ISO 13485:2016 clause numbering; add QMSR-specific requirements per 21 CFR 820.35",
+        "owner": "Sarah Lee",
+        "due_date": "2026-01-15",
+        "status": "COMPLETED"
+      },
+      {
+        "task_id": "DOC-REM-002",
+        "document_id": "DOC-QMS-002",
+        "document_title": "Control of Documents Procedure",
+        "change_description": "Address §820.180(c) exemption removal; update document retention requirements per ISO 13485:2016 §4.2.4",
+        "owner": "Anika Kumar",
+        "due_date": "2026-01-20",
+        "status": "COMPLETED"
+      },
+      {
+        "task_id": "DOC-REM-003",
+        "document_id": "DOC-QMS-020",
+        "document_title": "Soldering Assembly Work Instruction",
+        "change_description": "Update regulatory references from QSR to QMSR; add ISO 13485 clause cross-references",
+        "owner": "Robert Jones",
+        "due_date": "2026-02-28",
+        "status": "IN_PROGRESS"
+      }
+    ],
+    "capa_remediation_summary": "The following tasks address CAPA-related findings, including the 14 CAPAs missing effectiveness verification and process improvements to the CAPA system.",
+    "capa_tasks": [
+      {
+        "task_id": "CAPA-REM-001",
+        "capa_reference": "000300000007",
+        "remediation_action": "Complete effectiveness verification for packaging seal integrity CAPA",
+        "owner": "David Kim",
+        "due_date": "2026-02-15",
+        "status": "IN_PROGRESS"
+      },
+      {
+        "task_id": "CAPA-REM-002",
+        "capa_reference": "000300000009",
+        "remediation_action": "Complete effectiveness verification for calibration drift CAPA",
+        "owner": "Tina Chen",
+        "due_date": "2026-02-15",
+        "status": "IN_PROGRESS"
+      },
+      {
+        "task_id": "CAPA-REM-003",
+        "capa_reference": "SYSTEM",
+        "remediation_action": "Implement automated 90-day effectiveness verification alerts in CAPA system",
+        "owner": "Michael Weber",
+        "due_date": "2026-03-15",
+        "status": "PLANNED"
+      }
+    ],
+    "process_training_tasks": [
+      {
+        "task_id": "PT-REM-001",
+        "task_category": "Training",
+        "description": "QMSR awareness training for all quality personnel (35 staff)",
+        "owner": "Sarah Lee",
+        "due_date": "2026-01-31",
+        "status": "COMPLETED"
+      },
+      {
+        "task_id": "PT-REM-002",
+        "task_category": "Process",
+        "description": "Update management review procedure for FDA inspection readiness",
+        "owner": "Dr. James Hartwell",
+        "due_date": "2026-02-01",
+        "status": "COMPLETED"
+      },
+      {
+        "task_id": "PT-REM-003",
+        "task_category": "Training",
+        "description": "Internal auditor retraining on QMSR/ISO 13485 audit methodology",
+        "owner": "Michael Weber",
+        "due_date": "2026-02-28",
+        "status": "IN_PROGRESS"
+      },
+      {
+        "task_id": "PT-REM-004",
+        "task_category": "System",
+        "description": "Configure SAP QM module for QMSR-compliant notification workflows",
+        "owner": "Tina Chen",
+        "due_date": "2026-03-15",
+        "status": "PLANNED"
+      }
+    ],
+    "milestones": [
+      {
+        "milestone": "M1 - Gap Analysis Complete",
+        "description": "Complete QMSR gap and risk analysis across all QMS processes",
+        "target_date": "2026-01-20",
+        "status": "COMPLETED"
+      },
+      {
+        "milestone": "M2 - Critical Document Updates",
+        "description": "Complete all critical document revisions before QMSR effective date",
+        "target_date": "2026-02-01",
+        "status": "COMPLETED"
+      },
+      {
+        "milestone": "M3 - CAPA Effectiveness Verification",
+        "description": "Complete effectiveness verification for all 14 identified CAPAs",
+        "target_date": "2026-02-28",
+        "status": "IN_PROGRESS"
+      },
+      {
+        "milestone": "M4 - Full Remediation Complete",
+        "description": "All remediation tasks completed, verified, and closed",
+        "target_date": "2026-03-31",
+        "status": "PLANNED"
+      }
+    ],
+    "risk_assessment": "The primary risk to the remediation timeline is the CAPA effectiveness verification backlog (14 CAPAs). If effectiveness verification reveals that corrective actions were not effective, additional CAPA cycles will be required, potentially extending the timeline beyond March 31, 2026. Mitigation: Prioritize the 3 critical CAPAs and allocate dedicated resources for verification activities.",
+    "prepared_date": "2026-01-20",
+    "reviewed_date": "2026-01-22",
+    "approved_date": "2026-01-25"
+  }
+}

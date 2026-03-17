@@ -16,9 +16,17 @@ from .box_tools import (
     ask_box_ai_multi,
     create_folder,
     find_ai_agent_by_name,
+    generate_document,
+    generate_document_batch,
+    get_docgen_job_status,
+    get_docgen_template_by_id,
+    get_docgen_template_by_name,
+    get_docgen_template_tags,
     get_file_content,
     get_file_info,
     get_folder_info,
+    list_docgen_batch_jobs,
+    list_docgen_templates,
     search_files,
     upload_file,
 )
@@ -26,7 +34,7 @@ from .box_tools import (
 
 def create_box_agent() -> LlmAgent:
     """Constructs the ADK agent for Box document management operations."""
-    model = os.getenv("LITELLM_MODEL", "gemini-2.5-flash")
+    model = os.getenv("LITELLM_MODEL", "anthropic/claude-opus-4-6")
     return LlmAgent(
         model=LiteLlm(model=model),
         name="box_agent",
@@ -51,6 +59,14 @@ def create_box_agent() -> LlmAgent:
 - Always provide Box URLs (e.g., https://app.box.com/file/12345) when returning file information, using the actual file ID.
 - Format responses in Markdown with clear structure.
 - For controlled documents, highlight revision numbers, effective dates, and any CAPA references found in the content.
+
+**Document Generation (DocGen):**
+- Box DocGen generates documents from .docx templates by merging data into tagged placeholders.
+- Available templates include: QMSR Gap Risk Analysis, QMS Document Control Report, CAPA Completeness Report, and Remediation Plan.
+- To generate a document: (1) find the template with `list_docgen_templates` or `get_docgen_template_by_name`, (2) discover required fields with `get_docgen_template_tags`, (3) generate the document with `generate_document` providing template_id, destination_folder_id, and user_input as a JSON string of field values.
+- For batch generation of multiple documents from the same template, use `generate_document_batch`.
+- After generating, check status with `get_docgen_job_status` or `list_docgen_batch_jobs` using the returned batch_id.
+- Default output format is PDF; DOCX is also supported via the output_type parameter.
 """,
         tools=[
             search_files,
@@ -64,5 +80,13 @@ def create_box_agent() -> LlmAgent:
             ask_box_ai_hub,
             find_ai_agent_by_name,
             ask_ai_agent,
+            list_docgen_templates,
+            get_docgen_template_by_id,
+            get_docgen_template_by_name,
+            get_docgen_template_tags,
+            generate_document,
+            generate_document_batch,
+            get_docgen_job_status,
+            list_docgen_batch_jobs,
         ],
     )

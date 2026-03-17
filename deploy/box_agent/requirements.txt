@@ -1,0 +1,6 @@
+google-adk>=1.13.0
+a2a-sdk
+litellm>=1.76.1
+python-dotenv
+box-ai-agents-toolkit
+box-sdk-gen

@@ -9,14 +9,16 @@ Multi-agent A2A system for SAP Sapphire conference demo. Showcases SAP S/4HANA Q
 ## Architecture
 
 ```
-Host Agent :8000 (routing_agent)
-├── SAP Agent :8001 (sap_agent) → BigTable Emulator :8086
-└── Box Agent :8002 (box_agent) → Box API (CCG Auth)
+QMS Orchestrator :8000 (qms_orchestrator)
+├── query_sap ──→ SAP Agent :8001 (sap_agent) → BigTable Emulator :8086
+└── query_box ──→ Box Agent :8002 (box_agent) → Box API (CCG Auth)
 ```
 
 - **A2A Protocol** (JSON-RPC 2.0) for inter-agent communication
 - **Google ADK** (Agent Development Kit) with Gemini 2.5 Flash via LiteLLM
 - **FastMCP** wrappers on each agent's tools for MCP protocol support
+
+**Orchestrator→sub-agent communication**: The QMS Orchestrator does NOT use ADK sub-agents. Instead, `qms_orchestrator_tools.py` makes synchronous HTTP POST calls (via httpx) to the sub-agents' A2A endpoints. Each sub-agent runs its own independent ADK Runner.
 
 ## Key Commands
 
@@ -24,17 +26,20 @@ Host Agent :8000 (routing_agent)
 # Setup
 docker compose up -d                    # Start BigTable emulator
 uv sync                                 # Install dependencies
+cp .env.sample .env                     # Configure host env
+cp src/agents/sap_agent/.env.sample src/agents/sap_agent/.env
+cp src/agents/box_agent/.env.sample src/agents/box_agent/.env
 python scripts/load_bigtable.py         # Load JSONL data into BigTable
 
 # Run agents (each in separate terminal)
-uvicorn src.agents.sap_agent.__main__:a2a_app --host 0.0.0.0 --port 8001 --reload
+BIGTABLE_EMULATOR_HOST=localhost:8086 uvicorn src.agents.sap_agent.__main__:a2a_app --host 0.0.0.0 --port 8001 --reload
 uvicorn src.agents.box_agent.__main__:a2a_app --host 0.0.0.0 --port 8002 --reload
 uvicorn main:app --reload               # Host agent on port 8000
 
 # Verify agent cards
-curl http://localhost:8000/.well-known/agent-card.json
-curl http://localhost:8001/.well-known/agent-card.json
-curl http://localhost:8002/.well-known/agent-card.json
+curl http://localhost:8000/.well-known/agent.json
+curl http://localhost:8001/.well-known/agent.json
+curl http://localhost:8002/.well-known/agent.json
 
 # Generate sample PDFs
 python scripts/generate_pdfs.py
@@ -43,10 +48,10 @@ python scripts/generate_pdfs.py
 ## Project Structure
 
 ```
-main.py / host_agent.py / agent_executor.py  — Host routing agent (port 8000)
+main.py / qms_orchestrator.py / qms_orchestrator_tools.py / agent_executor.py  — QMS Orchestrator (port 8000)
 src/common/converters.py                     — Shared A2A ↔ GenAI part converters
 src/agents/sap_agent/                        — SAP QM agent (port 8001)
-    bigtable_client.py                       — BigTable query engine
+    bigtable_client.py                       — BigTable query engine (singleton)
     sap_tools.py                             — 5 tool functions
     sap_agent.py / sap_executor.py           — ADK agent + A2A executor
 src/agents/box_agent/                        — Box document agent (port 8002)
@@ -56,11 +61,12 @@ scripts/load_bigtable.py                     — JSONL → BigTable data loader
 scripts/generate_pdfs.py                     — Controlled document PDF generator
 data/*.jsonl                                 — Synthetic test data
 data/documents/*.pdf                         — Generated document PDFs
+deploy/                                      — Cloud Run deployment (Dockerfiles, flattened agents)
 ```
 
 ## Agent File Convention
 
-Each agent follows this pattern (from reference project box-adk-a2a-agents):
+Each agent follows this pattern:
 - `*_agent.py` — LlmAgent definition with tools and instruction prompt
 - `*_executor.py` — AgentExecutor (A2A request → ADK Runner → response)
 - `*_tools.py` — Pure tool functions returning `{"status": "success"|"error", ...}` dicts
@@ -68,11 +74,13 @@ Each agent follows this pattern (from reference project box-adk-a2a-agents):
 - `__main__.py` — Uvicorn entry point with AgentCard, Runner, A2A app
 - `.env.sample` — Environment variables template
 
-## Data Files
+## Environment Variables
 
-- `data/quality_notifications.jsonl` — 10 notifications with full CAPA hierarchy (_Item → _Cause, _Defect; _Task; _Activity)
-- `data/quality_info_records.jsonl` — 30 QualityInProcurement records
-- `data/controlled_documents.jsonl` — 20 controlled document records with CAPA cross-references
+QMS Orchestrator (`.env`): `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `LITELLM_MODEL`, `AGENT_URL`
+
+SAP agent adds: `BIGTABLE_EMULATOR_HOST`, `BIGTABLE_PROJECT_ID`, `BIGTABLE_INSTANCE_ID`, `APP_URL`
+
+Box agent adds: `BOX_CLIENT_ID`, `BOX_CLIENT_SECRET`, `BOX_SUBJECT_TYPE`, `BOX_SUBJECT_ID`, `BOX_ROOT_FOLDER_ID`, `APP_URL`
 
 ## BigTable Schema
 
@@ -83,11 +91,6 @@ Row key design for prefix-scan queries:
 
 Single column family `data`. Nested arrays stored as JSON-serialized values.
 
-## SAP API References
-
-- **Quality Info Record**: `API_QUALITYINFORECORD_SRV` (OData v2)
-- **Quality Notification (CAPA)**: `CE_QUALITYNOTIFICATION_0001` (OData v4)
-
 ## Data Conventions
 
 - Material prefixes: `FG-` (finished), `RM-` (raw), `HALB-` (semi-finished), `HAWA-` (trading)
@@ -97,6 +100,14 @@ Single column family `data`. Nested arrays stored as JSON-serialized values.
 - Doc types: `QM`, `SOP`, `WI`, `MDF`, `VP`, `RPT`
 - Personnel: JSMITH, AKUMAR, RJONES, SLEE, DKIM, MWEBER, TCHEN, LPARK, VPQUALITY
 
+## SAP API References
+
+- **Quality Info Record**: `API_QUALITYINFORECORD_SRV` (OData v2)
+- **Quality Notification (CAPA)**: `CE_QUALITYNOTIFICATION_0001` (OData v4)
+
 ## Demo Scenario
 
 FDA QMSR (effective Feb 2, 2026) amends 21 CFR 820 to incorporate ISO 13485:2016. Key change: §820.180(c) exemption removed — management review, audit, and supplier audit records now inspectable by FDA. Data shows bulk document revisions in Jan 2026, CAPA-driven procedure updates, gap assessment report, and full traceability from CAPA → document changes → ISO clause references.
+
+# currentDate
+Today's date is 2026-03-12.

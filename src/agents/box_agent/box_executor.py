@@ -4,6 +4,7 @@ Implements the AgentExecutor interface to process incoming A2A requests,
 run them through the ADK Runner, and stream results back.
 """
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 DEFAULT_USER_ID = "self"
+KEEPALIVE_INTERVAL = 15  # seconds between heartbeat status updates
 
 
 class BoxExecutor(AgentExecutor):
@@ -50,6 +52,18 @@ class BoxExecutor(AgentExecutor):
         session_id = session_obj.id
 
         self._active_sessions.add(session_id)
+
+        # Background keepalive: sends periodic status updates so the SSE
+        # stream doesn't go silent during long tool executions.
+        keepalive_active = True
+
+        async def keepalive():
+            while keepalive_active:
+                await asyncio.sleep(KEEPALIVE_INTERVAL)
+                if keepalive_active:
+                    await task_updater.update_status(TaskState.working)
+
+        keepalive_task = asyncio.create_task(keepalive())
 
         try:
             async for event in self.runner.run_async(
@@ -82,6 +96,12 @@ class BoxExecutor(AgentExecutor):
                 else:
                     logger.debug("[box] Skipping function call event")
         finally:
+            keepalive_active = False
+            keepalive_task.cancel()
+            try:
+                await keepalive_task
+            except asyncio.CancelledError:
+                pass
             self._active_sessions.discard(session_id)
 
     async def execute(

@@ -1,0 +1,25 @@
+{
+  "name": "sap_agent",
+  "description": "An agent that queries SAP Quality Management data including quality notifications (CAPAs), quality info records, and controlled documents for medical device manufacturing.",
+  "url": "https://sap-agent-861178164155.us-central1.run.app/a2a/sap_agent",
+  "version": "1.0.0",
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "capabilities": {
+    "streaming": false
+  },
+  "skills": [
+    {
+      "id": "quality_management",
+      "name": "SAP Quality Management",
+      "description": "Query SAP QM data for CAPAs, quality notifications, quality info records, controlled documents, and CAPA actions",
+      "tags": ["sap", "capa", "quality", "notifications", "iso13485", "qmsr"],
+      "examples": [
+        "Show me all open CAPAs",
+        "Get details of CAPA 000300000005",
+        "Find documents related to CAPA 000300000001",
+        "What preventive actions are still in process?"
+      ]
+    }
+  ]
+}

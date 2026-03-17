@@ -7,7 +7,7 @@ Multi-agent A2A system for the SAP Sapphire conference demo. Showcases SAP S/4HA
 ```
 Client (A2A Inspector / curl)
     ↓ A2A (JSON-RPC 2.0)
-Host Agent :8000  (routing_agent - Gemini 2.5 Flash)
+QMS Orchestrator :8000  (qms_orchestrator - Gemini 2.5 Flash)
     ├── query_sap ──→ SAP Agent :8001  (sap_agent)
     │                     └── BigTable Emulator :8086
     │                           ├── quality_notifications (10 records)
@@ -52,7 +52,7 @@ BIGTABLE_EMULATOR_HOST=localhost:8086 uvicorn src.agents.sap_agent.__main__:a2a_
 # Box Agent (port 8002)
 uvicorn src.agents.box_agent.__main__:a2a_app --host 0.0.0.0 --port 8002 --reload
 
-# Host Agent (port 8000)
+# QMS Orchestrator (port 8000)
 uvicorn main:app --reload
 ```
 
@@ -131,7 +131,7 @@ The FDA QMSR became effective February 2, 2026, amending 21 CFR 820 to incorpora
 ## Project Structure
 
 ```
-main.py / host_agent.py / host_tools.py / agent_executor.py  — Host routing agent
+main.py / qms_orchestrator.py / qms_orchestrator_tools.py / agent_executor.py  — QMS Orchestrator (port 8000)
 src/common/converters.py                                      — Shared A2A ↔ GenAI converters
 src/agents/sap_agent/                                         — SAP QM agent (BigTable queries)
 src/agents/box_agent/                                         — Box document agent (Box SDK + AI)

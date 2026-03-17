@@ -20,7 +20,7 @@ from .sap_tools import (
 
 def create_sap_agent() -> LlmAgent:
     """Constructs the ADK agent for SAP Quality Management queries."""
-    model = os.getenv("LITELLM_MODEL", "gemini-2.5-flash")
+    model = os.getenv("LITELLM_MODEL", "anthropic/claude-opus-4-6")
     return LlmAgent(
         model=LiteLlm(model=model),
         name="sap_agent",

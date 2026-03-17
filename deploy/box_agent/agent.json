@@ -1,0 +1,24 @@
+{
+  "name": "box_agent",
+  "description": "An agent that manages controlled documents in Box for medical device quality management, including search, AI-powered Q&A, and CRUD operations.",
+  "url": "https://box-agent-861178164155.us-central1.run.app/a2a/box_agent",
+  "version": "1.0.0",
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "capabilities": {
+    "streaming": false
+  },
+  "skills": [
+    {
+      "id": "document_management",
+      "name": "Box Document Management",
+      "description": "Search, read, upload, and query documents in Box for QMS compliance",
+      "tags": ["box", "documents", "qms", "search", "ai"],
+      "examples": [
+        "Search for incoming inspection documents",
+        "What does the quality manual say about management review?",
+        "Upload a new CAPA report to Box"
+      ]
+    }
+  ]
+}

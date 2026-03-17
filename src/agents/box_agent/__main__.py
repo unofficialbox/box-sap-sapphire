@@ -49,14 +49,17 @@ def create_app():
         name="Box Document Management",
         description=(
             "Manages controlled QMS documents in Box: search, read content, "
-            "AI-powered Q&A, upload files, and organize folders"
+            "AI-powered Q&A, upload files, organize folders, and generate "
+            "documents from DocGen templates"
         ),
-        tags=["box", "documents", "files", "folders", "ai", "qms", "controlled"],
+        tags=["box", "documents", "files", "folders", "ai", "qms", "controlled", "docgen", "templates"],
         examples=[
             "Search for CAPA procedure documents",
             "What does the incoming inspection SOP say about trace metals?",
             "Upload a document to the QMS folder",
             "Ask Box AI about the quality manual",
+            "List available DocGen templates",
+            "Generate a QMSR Gap Risk Analysis report from the template",
         ],
     )
 
@@ -66,7 +69,8 @@ def create_app():
         name="Box Agent",
         description=(
             "Manages controlled documents in Box for medical device quality "
-            "management, including search, AI-powered Q&A, and CRUD operations"
+            "management, including search, AI-powered Q&A, CRUD operations, "
+            "and document generation from DocGen templates"
         ),
         url=app_url,
         version="1.0.0",
