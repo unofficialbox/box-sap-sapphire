@@ -14,7 +14,7 @@ COPY --chown=myuser:myuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy agent source into ADK package structure
-COPY --chown=myuser:myuser qms_orchestrator.py qms_orchestrator_tools.py agent.json __init__.py ./agents/host_agent/
+COPY --chown=myuser:myuser agent.py qms_orchestrator.py qms_orchestrator_tools.py agent.json __init__.py ./agents/host_agent/
 
 ENV PORT=8080
 EXPOSE 8080
