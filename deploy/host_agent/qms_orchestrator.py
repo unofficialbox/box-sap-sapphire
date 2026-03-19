@@ -10,7 +10,7 @@ from google.adk.models.lite_llm import LiteLlm
 
 from .qms_orchestrator_tools import query_box, query_sap
 
-model = os.getenv("LITELLM_MODEL", "anthropic/claude-opus-4-6")
+model = os.getenv("LITELLM_MODEL", "gemini/gemini-3-flash-preview")
 
 root_agent = LlmAgent(
     model=LiteLlm(model=model),

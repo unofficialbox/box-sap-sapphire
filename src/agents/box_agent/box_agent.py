@@ -34,7 +34,7 @@ from .box_tools import (
 
 def create_box_agent() -> LlmAgent:
     """Constructs the ADK agent for Box document management operations."""
-    model = os.getenv("LITELLM_MODEL", "anthropic/claude-opus-4-6")
+    model = os.getenv("LITELLM_MODEL", "gemini/gemini-3-flash-preview")
     return LlmAgent(
         model=LiteLlm(model=model),
         name="box_agent",

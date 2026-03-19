@@ -30,7 +30,7 @@ from .box_tools import (
     upload_file,
 )
 
-model = os.getenv("LITELLM_MODEL", "anthropic/claude-opus-4-6")
+model = os.getenv("LITELLM_MODEL", "gemini/gemini-3-flash-preview")
 
 root_agent = LlmAgent(
     model=LiteLlm(model=model),
