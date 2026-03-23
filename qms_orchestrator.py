@@ -15,7 +15,7 @@ from qms_orchestrator_tools import query_box, query_sap
 
 def create_root_agent() -> LlmAgent:
     """Constructs the QMS orchestrator agent with SAP and Box tools."""
-    model = os.getenv("LITELLM_MODEL", "gemini/gemini-3-flash-preview")
+    model = os.getenv("LITELLM_MODEL", "vertex_ai/gemini-3-flash-preview")
     return LlmAgent(
         model=LiteLlm(model=model),
         name="qms_orchestrator",
