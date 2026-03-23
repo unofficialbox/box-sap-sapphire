@@ -16,7 +16,7 @@ from .sap_tools import (
     search_capa_actions,
 )
 
-model = os.getenv("LITELLM_MODEL", "vertex_ai/gemini-3-flash-preview")
+model = os.getenv("LITELLM_MODEL", "vertex_ai/gemini-2.5-flash")
 
 root_agent = LlmAgent(
     model=LiteLlm(model=model),
