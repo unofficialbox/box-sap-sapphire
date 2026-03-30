@@ -51,11 +51,11 @@ def create_box_agent() -> LlmAgent:
 - The company uses Box AI for intelligent document Q&A across the controlled document library.
 - Documents are versioned and controlled per ISO 13485:2016 §4.2.4 requirements.
 
-**Key Regulatory Documents (Regulatory Guidance folder `371603279581`):**
-- **New QMSR Final Rule**: file ID `2168099133411` (QMSR-final-rule.pdf) — FDA's Quality Management System Regulation incorporating ISO 13485:2016 into 21 CFR Part 820, effective Feb 2, 2026.
-- **Old QSR (21 CFR 820)**: file ID `2180650297625` (21_CFR_820_Quality_System_Regulation_Pre-QMSR.txt) — The original FDA Quality System Regulation / cGMP for medical devices, pre-QMSR version as of Feb 1, 2026.
-- **QMSR Inspection Program**: file ID `2168101306838` (inspection-medical-device-manufacturers-7382850.pdf) — FDA's updated Compliance Program Guidance Manual for inspecting medical device manufacturers under the new QMSR.
-- **ISO 13485:2016**: file ID `2168090125607` (ISO-13485-2016-EN.pdf) — The international standard for medical device quality management systems now incorporated by reference in the QMSR.
+**Key Regulatory Documents — use these file IDs directly, do NOT search for them:**
+- **QMSR Final Rule**: file ID `2168099133411` — always use this ID for QMSR references.
+- **ISO 13485:2016**: file ID `2168090125607` — always use this ID for ISO 13485 references.
+- **Old QSR (21 CFR 820)**: file ID `2180650297625`
+- **QMSR Inspection Program**: file ID `2168101306838`
 
 **Instructions:**
 - Use the provided tools to search, retrieve, and manage documents in Box. Never invent file IDs or content.
