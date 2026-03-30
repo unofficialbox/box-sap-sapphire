@@ -50,6 +50,16 @@ def _get_client():
     return get_ccg_client()
 
 
+def _box_file_url(file_id: str) -> str:
+    """Return the Box web app URL for a file."""
+    return f"https://app.box.com/file/{file_id}"
+
+
+def _box_folder_url(folder_id: str) -> str:
+    """Return the Box web app URL for a folder."""
+    return f"https://app.box.com/folder/{folder_id}"
+
+
 # ── Search & Read ──────────────────────────────────────────────────────
 
 
@@ -126,6 +136,7 @@ def get_file_content(
         return {
             "status": "success",
             "file_id": file_id,
+            "file_url": _box_file_url(file_id),
             **result,
         }
 
@@ -160,8 +171,9 @@ def create_folder(
 
         result = box_folder_create(client, name=folder_name, parent_folder_id=parent_folder_id)
 
+        folder_id = result.get("id", "")
         logger.info("create_folder: created %s", folder_name)
-        return {"status": "success", **result}
+        return {"status": "success", "folder_url": _box_folder_url(folder_id), **result}
 
     except Exception as e:
         logger.error("create_folder failed: %s", e)
@@ -195,8 +207,9 @@ def upload_file(
             client, content=file_content, file_name=file_name, parent_folder_id=folder_id,
         )
 
+        file_id = result.get("id", "")
         logger.info("upload_file: uploaded %s", file_name)
-        return {"status": "success", **result}
+        return {"status": "success", "file_url": _box_file_url(file_id), **result}
 
     except Exception as e:
         logger.error("upload_file failed: %s", e)
@@ -248,7 +261,7 @@ def get_file_info(
         result = box_file_info(client, file_id)
 
         logger.info("get_file_info: retrieved file %s", file_id)
-        return {"status": "success", **result}
+        return {"status": "success", "file_url": _box_file_url(file_id), **result}
 
     except Exception as e:
         logger.error("get_file_info failed: %s", e)
@@ -575,7 +588,11 @@ def generate_document(
         )
 
         logger.info("generate_document: batch created for template %s", template_id)
-        return {"status": "success", **result}
+        return {
+            "status": "success",
+            "destination_folder_url": _box_folder_url(destination_folder_id),
+            **result,
+        }
 
     except _json.JSONDecodeError as e:
         logger.error("generate_document: invalid JSON in user_input: %s", e)
