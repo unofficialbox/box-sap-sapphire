@@ -7,6 +7,7 @@ forwarded to the user in real time via a shared asyncio.Queue.
 
 import asyncio
 import logging
+import random
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
@@ -31,7 +32,31 @@ from .qms_orchestrator_tools import progress_queue
 
 logger = logging.getLogger(__name__)
 
-KEEPALIVE_INTERVAL = 30  # seconds between heartbeat status updates
+KEEPALIVE_INTERVAL = 10  # seconds between spinner status updates
+
+SPINNER_VERBS = [
+    "Alphabetizing", "Archiving", "Boxing", "Browsing",
+    "Cataloging", "Collating", "Color-coding", "Curating",
+    "Decluttering", "Digging", "Dusting off", "Excavating",
+    "Filing", "Flipping through", "Fossicking", "Fumbling",
+    "Gathering", "Leafing", "Nesting", "Nudging",
+    "Origami-ing", "Packing", "Papershuffling", "Perusing",
+    "Pigeon-holing", "Pruning", "Riffling", "Rifling",
+    "Rummaging", "Rustling", "Scouring", "Scrapbooking",
+    "Shelving", "Sifting", "Skimming", "Sorting",
+    "Stacking", "Stamping", "Stapling", "Tabbing",
+    "Thumbing", "Tidying", "Tracing", "Transcribing",
+    "Trawling", "Tucking", "Unboxing", "Uncovering",
+    "Unearthing", "Unfolding", "Unfurling", "Unpacking",
+    "Unraveling", "Unscrolling", "Unwrapping", "Wrangling",
+]
+
+SPINNER_NOUNS = [
+    "quality records", "compliance documents", "regulatory filings",
+    "CAPA reports", "audit trails", "inspection records",
+    "controlled documents", "ISO clauses", "FDA guidance",
+    "quality notifications", "supplier records", "device files",
+]
 
 
 class QmsOrchestratorExecutor(AgentExecutor):
@@ -111,14 +136,24 @@ class QmsOrchestratorExecutor(AgentExecutor):
 
         progress_task = asyncio.create_task(drain_progress())
 
-        # Background keepalive for truly silent periods
+        # Background spinner for silent periods
         keepalive_active = True
 
         async def keepalive():
+            used_verbs = []
             while keepalive_active:
                 await asyncio.sleep(KEEPALIVE_INTERVAL)
                 if keepalive_active:
-                    await updater.update_status(TaskState.working)
+                    if not used_verbs:
+                        used_verbs = random.sample(SPINNER_VERBS, len(SPINNER_VERBS))
+                    verb = used_verbs.pop()
+                    noun = random.choice(SPINNER_NOUNS)
+                    await updater.update_status(
+                        TaskState.working,
+                        message=updater.new_agent_message(
+                            [Part(root=TextPart(text=f"{verb} {noun}..."))],
+                        ),
+                    )
 
         keepalive_task = asyncio.create_task(keepalive())
 
