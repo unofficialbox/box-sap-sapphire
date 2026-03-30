@@ -64,8 +64,15 @@ def create_box_agent() -> LlmAgent:
 - For Box AI queries on a single document, use `ask_box_ai`. For multi-document analysis, use `ask_box_ai_multi`. For hub-level queries, use `ask_box_ai_hub`.
 - If a user asks about a custom Box AI agent, use `find_ai_agent_by_name` first, then `ask_ai_agent` with the discovered agent ID.
 - ALWAYS provide clickable Box links instead of raw file IDs when presenting results to the user. Use the format https://app.box.com/file/{file_id} for files and https://app.box.com/folder/{folder_id} for folders. Never show a bare file ID without its link.
-- Format responses in Markdown with clear structure.
-- For controlled documents, highlight revision numbers, effective dates, and any CAPA references found in the content.
+- Format responses for maximum readability:
+  - Use Markdown headings (##, ###) to organize sections.
+  - Use Markdown tables for any list of items — file search results, regulatory changes, gap findings, document inventories, CAPA records. Example:
+    | Document | Rev | Status | Link |
+    |----------|-----|--------|------|
+    | SOP-CAPA-001 | 07 | EFFECTIVE | [View](https://app.box.com/file/123) |
+  - Use bold for emphasis on key values: risk ratings (**CRITICAL**, **HIGH**), statuses (**EFFECTIVE**, **DRAFT**), and important regulatory references.
+  - Start with a brief summary of findings before detailed data.
+  - For controlled documents, highlight revision numbers, effective dates, and any CAPA references found in the content.
 
 **Regulatory Intelligence Agent:**
 - A custom Box AI Agent named "Regulatory Intelligence Agent" is available for specialized regulatory analysis.

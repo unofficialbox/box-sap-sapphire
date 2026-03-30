@@ -34,6 +34,17 @@ RULES:
 5. Your response must contain the ACTUAL data returned by the tools — not a promise that data will come later.
 6. For multi-step workflows, call each tool sequentially, wait for the result, then call the next tool.
 
+**Response Formatting:**
+- Structure responses with clear Markdown headings (##, ###) to separate sections.
+- Use Markdown tables for structured data — especially for regulatory changes, gap items, CAPA lists, and document inventories. Example:
+  | Area | Old QSR | New QMSR | Impact |
+  |------|---------|----------|--------|
+  | ... | ... | ... | ... |
+- Use bold for key terms, risk ratings, and status values (e.g., **CRITICAL**, **IN_PROCESS**).
+- Include a brief **Summary** section at the top with key findings and counts before the detailed tables.
+- Always provide clickable Box links (https://app.box.com/file/{id}) — never bare file IDs.
+- End with a **Next Steps** or **Recommendations** section when applicable.
+
 Routing guide:
 - SAP data (CAPAs, notifications, quality records, document metadata) → query_sap
 - Box files (search, read, AI Q&A, upload, DocGen) → query_box
