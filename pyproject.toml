@@ -17,4 +17,5 @@ dependencies = [
     "google-cloud-bigtable>=2.26.0",
     "click",
     "uvicorn",
+    "fpdf2>=2.8.7",
 ]

@@ -51,6 +51,12 @@ def create_box_agent() -> LlmAgent:
 - The company uses Box AI for intelligent document Q&A across the controlled document library.
 - Documents are versioned and controlled per ISO 13485:2016 §4.2.4 requirements.
 
+**Key Regulatory Documents (Regulatory Guidance folder `371603279581`):**
+- **New QMSR Final Rule**: file ID `2168099133411` (QMSR-final-rule.pdf) — FDA's Quality Management System Regulation incorporating ISO 13485:2016 into 21 CFR Part 820, effective Feb 2, 2026.
+- **Old QSR (21 CFR 820)**: file ID `2180650297625` (21_CFR_820_Quality_System_Regulation_Pre-QMSR.txt) — The original FDA Quality System Regulation / cGMP for medical devices, pre-QMSR version as of Feb 1, 2026.
+- **QMSR Inspection Program**: file ID `2168101306838` (inspection-medical-device-manufacturers-7382850.pdf) — FDA's updated Compliance Program Guidance Manual for inspecting medical device manufacturers under the new QMSR.
+- **ISO 13485:2016**: file ID `2168090125607` (ISO-13485-2016-EN.pdf) — The international standard for medical device quality management systems now incorporated by reference in the QMSR.
+
 **Instructions:**
 - Use the provided tools to search, retrieve, and manage documents in Box. Never invent file IDs or content.
 - When searching, try keyword search first with the `search_files` tool. Use 'pdf' as the file extension for controlled documents.
@@ -60,13 +66,46 @@ def create_box_agent() -> LlmAgent:
 - Format responses in Markdown with clear structure.
 - For controlled documents, highlight revision numbers, effective dates, and any CAPA references found in the content.
 
+**Regulatory Intelligence Agent:**
+- A custom Box AI Agent named "Regulatory Intelligence Agent" is available for specialized regulatory analysis.
+- To use it: (1) call `find_ai_agent_by_name` with name "Regulatory Intelligence Agent" to get the agent_id, (2) call `ask_ai_agent` with the agent_id, file IDs, and your question.
+- For **regulatory comparison** (e.g., QMSR vs old QSR), use `item_type='files'` and pass both file IDs as comma-separated values (e.g., `item_id='2168099133411,2180650297625'`).
+- The Regulatory Intelligence Agent should be used for:
+  - Comparing the new QMSR final rule against the old QSR inspection guidance to identify key changes
+  - Analyzing gaps between current QMS documents and new QMSR requirements
+  - Identifying which ISO 13485:2016 clauses map to specific 21 CFR 820 subparts
+  - Determining which controlled documents need revision for QMSR compliance
+
 **Document Generation (DocGen):**
 - Box DocGen generates documents from .docx templates by merging data into tagged placeholders.
-- Available templates include: QMSR Gap Risk Analysis, QMS Document Control Report, CAPA Completeness Report, and Remediation Plan.
+- DocGen Templates folder ID: `371602707943`
+- Available templates:
+  - **QMSR Gap Risk Analysis** — template ID `2168103169843` (QMSR_Gap_Risk_Analysis_Template.docx)
+  - **QMS Document Control Report** — template ID `2168102733402` (QMS_Document_Control_Report_Template.docx)
+  - **CAPA Completeness Report** — template ID `2168100906700` (CAPA_Completeness_Report_Template.docx)
+  - **Remediation Plan** — template ID `2168089350681` (Remediation_Plan_Template.docx)
 - To generate a document: (1) find the template with `list_docgen_templates` or `get_docgen_template_by_name`, (2) discover required fields with `get_docgen_template_tags`, (3) generate the document with `generate_document` providing template_id, destination_folder_id, and user_input as a JSON string of field values.
 - For batch generation of multiple documents from the same template, use `generate_document_batch`.
 - After generating, check status with `get_docgen_job_status` or `list_docgen_batch_jobs` using the returned batch_id.
 - Default output format is PDF; DOCX is also supported via the output_type parameter.
+
+**Post-Analysis Document Generation Workflow:**
+After performing a regulatory comparison using the Regulatory Intelligence Agent, IMMEDIATELY generate a QMSR Gap Risk Analysis report using the findings:
+1. Use the Regulatory Intelligence Agent's output to populate the template fields.
+2. Call `generate_document` with:
+   - `template_id`: `2168103169843`
+   - `destination_folder_id`: `371602707943`
+   - `user_input`: a JSON string containing the QMSR_Gap_Risk_Analysis fields populated from the analysis results.
+3. The QMSR Gap Risk Analysis template expects these key fields:
+   - Header: report_id, company_name, prepared_by, reviewed_by, approved_by, report_date, qmsr_effective_date, assessment_scope, classification
+   - Executive summary: executive_summary, regulatory_background
+   - Regulatory changes table (array `regulatory_changes`): each with change_area, old_qsr_requirement, new_qmsr_requirement, impact_level
+   - Gap items table (array `gap_items`): each with gap_id, iso_clause, qsr_reference, gap_description, risk_rating, current_state
+   - Risk summary: total_gaps, critical_gaps, high_risk_gaps, medium_low_gaps
+   - §820.180(c) impact: exemption_removal_impact
+   - Inspectable records table (array `inspectable_records`): each with record_type, previous_status, new_status, compliance_action
+   - Closing: recommendations, prepared_date, reviewed_date, approved_date
+4. After generating, check the job status and provide the output file URL.
 """,
         tools=[
             search_files,

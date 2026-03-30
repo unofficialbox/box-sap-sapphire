@@ -289,11 +289,13 @@ def ask_ai_agent(
     prompt: str,
     tool_context: Optional[ToolContext] = None,
 ) -> dict[str, Any]:
-    """Ask a question to a Box AI agent about a specific item.
+    """Ask a question to a Box AI agent about a specific item or multiple items.
 
     Args:
-        item_id: ID of the item (file or hub) to ask about.
-        item_type: Type of the item ('file' or 'hub').
+        item_id: ID of the item (file or hub) to ask about. For multi-file queries,
+            provide comma-separated file IDs (e.g., '123,456,789').
+        item_type: Type of the item ('file', 'files', or 'hub').
+            Use 'files' for multi-file queries with a custom agent.
         agent_id: ID of the AI agent to use.
         prompt: The question to ask.
 
@@ -306,10 +308,13 @@ def ask_ai_agent(
 
         if item_type == "file":
             result = box_ai_ask_file_single(client, file_id=item_id, prompt=prompt, ai_agent_id=agent_id)
+        elif item_type == "files":
+            file_ids = [fid.strip() for fid in item_id.split(",") if fid.strip()]
+            result = box_ai_ask_file_multi(client, file_ids=file_ids, prompt=prompt, ai_agent_id=agent_id)
         elif item_type == "hub":
             result = box_ai_ask_hub(client, hub_id=item_id, prompt=prompt, ai_agent_id=agent_id)
         else:
-            return {"status": "error", "error_message": f"Invalid item_type '{item_type}'. Must be 'file' or 'hub'."}
+            return {"status": "error", "error_message": f"Invalid item_type '{item_type}'. Must be 'file', 'files', or 'hub'."}
 
         return {"status": "success", **result}
 
