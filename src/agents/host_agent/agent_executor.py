@@ -1,7 +1,8 @@
 """QMS Orchestrator executor for A2A request handling.
 
 Executor pattern for the QMS orchestrator agent that delegates
-to sub-agents via the ADK Runner.
+to sub-agents via the ADK Runner. Sub-agent progress updates are
+forwarded to the user in real time via a shared asyncio.Queue.
 """
 
 import asyncio
@@ -24,8 +25,9 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai.types import Content
 
 from .qms_orchestrator import create_root_agent
+from .qms_orchestrator_tools import progress_queue
 
-KEEPALIVE_INTERVAL = 15  # seconds between heartbeat status updates
+KEEPALIVE_INTERVAL = 30  # seconds between heartbeat status updates
 
 
 class QmsOrchestratorExecutor(AgentExecutor):
@@ -76,8 +78,35 @@ class QmsOrchestratorExecutor(AgentExecutor):
 
         await updater.start_work()
 
-        # Background keepalive: sends periodic status updates so the SSE
-        # stream doesn't go silent during long tool executions.
+        # Drain any stale messages from previous runs
+        while not progress_queue.empty():
+            try:
+                progress_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+
+        # Background task: drain progress_queue and forward sub-agent
+        # status updates to the user via TaskUpdater.
+        progress_active = True
+
+        async def drain_progress():
+            while progress_active:
+                try:
+                    msg = await asyncio.wait_for(
+                        progress_queue.get(), timeout=1.0
+                    )
+                    await updater.update_status(
+                        TaskState.working,
+                        message=new_agent_text_message(msg),
+                    )
+                except asyncio.TimeoutError:
+                    continue
+                except Exception:
+                    continue
+
+        progress_task = asyncio.create_task(drain_progress())
+
+        # Background keepalive for truly silent periods
         keepalive_active = True
 
         async def keepalive():
@@ -86,7 +115,7 @@ class QmsOrchestratorExecutor(AgentExecutor):
                 if keepalive_active:
                     await updater.update_status(
                         TaskState.working,
-                        message=new_agent_text_message("Processing..."),
+                        message=new_agent_text_message("Still processing..."),
                     )
 
         keepalive_task = asyncio.create_task(keepalive())
@@ -109,53 +138,43 @@ class QmsOrchestratorExecutor(AgentExecutor):
                         )
                         await updater.complete()
                 elif event.content and event.content.parts:
-                    has_function_call = False
-                    has_text = False
                     for part in event.content.parts:
+                        # Forward function call info as progress
                         if hasattr(part, "function_call") and part.function_call:
-                            has_function_call = True
                             fc = part.function_call
-                            # Provide descriptive progress messages
-                            tool_descriptions = {
-                                "query_sap": "Querying SAP Quality Management system",
-                                "query_box": "Querying Box document management system",
+                            tool_labels = {
+                                "query_sap": "Routing to SAP Quality Management agent",
+                                "query_box": "Routing to Box document management agent",
                             }
-                            desc = tool_descriptions.get(fc.name, f"Calling {fc.name}")
-                            # Include query snippet if available
+                            desc = tool_labels.get(fc.name, f"Calling {fc.name}")
                             query_arg = (fc.args or {}).get("query", "")
                             if query_arg:
-                                snippet = query_arg[:120]
-                                desc = f"{desc}: {snippet}{'...' if len(query_arg) > 120 else ''}"
+                                snippet = query_arg[:150]
+                                desc = f"{desc}: {snippet}{'...' if len(query_arg) > 150 else ''}"
                             await updater.update_status(
                                 TaskState.working,
                                 message=new_agent_text_message(desc),
                             )
+                        # Forward intermediate LLM text as progress
                         elif hasattr(part, "text") and part.text:
-                            has_text = True
-                    # Stream intermediate text (LLM thinking/reasoning) as progress
-                    if has_text and not has_function_call:
-                        text_parts = [
-                            p.text for p in event.content.parts
-                            if hasattr(p, "text") and p.text
-                        ]
-                        if text_parts:
                             await updater.update_status(
                                 TaskState.working,
-                                message=new_agent_text_message(
-                                    " ".join(text_parts)
-                                ),
+                                message=new_agent_text_message(part.text),
                             )
         except Exception as e:
             await updater.failed(
                 message=new_agent_text_message(f"Task failed with error: {e}")
             )
         finally:
+            progress_active = False
             keepalive_active = False
+            progress_task.cancel()
             keepalive_task.cancel()
-            try:
-                await keepalive_task
-            except asyncio.CancelledError:
-                pass
+            for t in (progress_task, keepalive_task):
+                try:
+                    await t
+                except asyncio.CancelledError:
+                    pass
 
     async def cancel(
         self, context: RequestContext, event_queue: EventQueue
