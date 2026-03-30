@@ -665,6 +665,13 @@ def generate_document_batch(
         return {"status": "error", "error_message": str(e), "template_id": template_id}
 
 
+def _enrich_docgen_job(job: dict) -> None:
+    """Add output_file_url to a DocGen job dict if output_file is present."""
+    output_file = job.get("output_file")
+    if isinstance(output_file, dict) and output_file.get("id"):
+        job["output_file_url"] = _box_file_url(output_file["id"])
+
+
 def get_docgen_job_status(
     job_id: str,
     tool_context: Optional[ToolContext] = None,
@@ -682,6 +689,7 @@ def get_docgen_job_status(
         client = _get_client()
 
         result = box_docgen_get_job_by_id(client, job_id)
+        _enrich_docgen_job(result)
 
         logger.info("get_docgen_job_status: retrieved job %s", job_id)
         return {"status": "success", **result}
@@ -708,6 +716,8 @@ def list_docgen_batch_jobs(
         client = _get_client()
 
         results = box_docgen_list_jobs_by_batch(client, batch_id)
+        for job in results:
+            _enrich_docgen_job(job)
 
         logger.info("list_docgen_batch_jobs: found %d jobs in batch %s", len(results), batch_id)
         return {"status": "success", "batch_id": batch_id, "count": len(results), "jobs": results}
