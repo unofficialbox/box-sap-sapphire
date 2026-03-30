@@ -111,12 +111,18 @@ class QmsOrchestratorExecutor(AgentExecutor):
         # status updates to the user via TaskUpdater.
         progress_active = True
 
+        # Phrases that are too generic to show the user
+        _skip_phrases = {"processing query", "processing request"}
+
         async def drain_progress():
             while progress_active:
                 try:
                     msg = await asyncio.wait_for(
                         progress_queue.get(), timeout=1.0
                     )
+                    # Skip noisy/generic progress messages
+                    if any(p in msg.lower() for p in _skip_phrases):
+                        continue
                     await updater.update_status(
                         TaskState.working,
                         message=updater.new_agent_message(
@@ -171,32 +177,21 @@ class QmsOrchestratorExecutor(AgentExecutor):
                             await updater.update_status(TaskState.completed, final=True)
                 elif event.content and event.content.parts:
                     for part in event.content.parts:
-                        # Forward function call info as progress
+                        # Forward function call routing as a single progress message
                         if hasattr(part, "function_call") and part.function_call:
                             fc = part.function_call
                             tool_labels = {
-                                "query_sap": "Routing to SAP Quality Management agent",
-                                "query_box": "Routing to Box document management agent",
+                                "query_sap": "Querying SAP Quality Management...",
+                                "query_box": "Querying Box documents...",
                             }
-                            desc = tool_labels.get(fc.name, f"Calling {fc.name}")
-                            query_arg = (fc.args or {}).get("query", "")
-                            if query_arg:
-                                snippet = query_arg[:150]
-                                desc = f"{desc}: {snippet}{'...' if len(query_arg) > 150 else ''}"
-                            await updater.update_status(
-                                TaskState.working,
-                                message=updater.new_agent_message(
-                                    [Part(root=TextPart(text=desc))],
-                                ),
-                            )
-                        # Forward intermediate LLM text as progress
-                        elif hasattr(part, "text") and part.text:
-                            await updater.update_status(
-                                TaskState.working,
-                                message=updater.new_agent_message(
-                                    [Part(root=TextPart(text=part.text))],
-                                ),
-                            )
+                            desc = tool_labels.get(fc.name)
+                            if desc:
+                                await updater.update_status(
+                                    TaskState.working,
+                                    message=updater.new_agent_message(
+                                        [Part(root=TextPart(text=desc))],
+                                    ),
+                                )
         except Exception as e:
             logger.error("Host executor failed: %s", e, exc_info=True)
             await updater.update_status(
