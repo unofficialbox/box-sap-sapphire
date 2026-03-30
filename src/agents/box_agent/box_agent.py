@@ -109,8 +109,8 @@ def create_box_agent() -> LlmAgent:
   - **QMS Document Control Report** — template ID `2168102733402` (QMS_Document_Control_Report_Template.docx)
   - **CAPA Completeness Report** — template ID `2168100906700` (CAPA_Completeness_Report_Template.docx)
   - **Remediation Plan** — template ID `2168089350681` (Remediation_Plan_Template.docx)
-- To generate a document: (1) find the template with `list_docgen_templates` or `get_docgen_template_by_name`, (2) discover required fields with `get_docgen_template_tags`, (3) generate the document with `generate_document` providing template_id, destination_folder_id, and user_input as a JSON string of field values.
-- For batch generation of multiple documents from the same template, use `generate_document_batch`.
+- To generate a document: call `generate_document` with template_id, destination_folder_id, and user_input as a JSON string. The template IDs and JSON structures are provided below — do NOT call `list_docgen_templates`, `get_docgen_template_by_name`, or `get_docgen_template_tags`. Just use the structures directly.
+- **CRITICAL: You MUST provide a value for EVERY field in the JSON structure. Do NOT omit any key, leave any value empty, or set any value to null. Every placeholder in the template must be filled.** For array fields (tables), provide at least one row with all sub-fields populated. If you don't have specific data for a field, generate a reasonable value based on context.
 - After generating, check status with `get_docgen_job_status` or `list_docgen_batch_jobs` using the returned batch_id.
 - Default output format is PDF; DOCX is also supported via the output_type parameter.
 
@@ -121,8 +121,8 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
    - `template_id`: `2168103169843`
    - `destination_folder_id`: `371602616529` (Generated Reports folder)
    - `generated_file_name`: Use the pattern `QMSR_Gap_Risk_Analysis_<N>` where `<N>` is an incrementing number (e.g., `QMSR_Gap_Risk_Analysis_1`, `QMSR_Gap_Risk_Analysis_2`). Do NOT include `.docx`, `.pdf`, or the word "Template" in the name.
-   - `user_input`: a JSON string containing the fields below. IMPORTANT: all string values must be on a single line with no literal newlines — use spaces instead.
-3. The QMSR Gap Risk Analysis template expects this exact JSON structure:
+   - `user_input`: a JSON string with ALL of the fields below populated. IMPORTANT: all string values must be on a single line with no literal newlines — use spaces instead. Every field MUST have a value. Every array MUST have at least one item with all sub-fields filled.
+3. The QMSR Gap Risk Analysis template requires ALL 38 fields — this exact JSON structure:
 ```json
 {
   "report_id": "RPT-GAP-2026-001",
@@ -160,7 +160,7 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 4. After generating, check the job status with `get_docgen_job_status` or `list_docgen_batch_jobs` and provide the output file URL.
 
 **CAPA Completeness Report Generation:**
-When asked to generate a CAPA Completeness Report, call `generate_document` with template ID `2168100906700`, destination folder `371602616529` (Generated Reports), and `generated_file_name` following the pattern `CAPA_Completeness_Report_<N>` (incrementing number). Use the SAP data provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
+When asked to generate a CAPA Completeness Report, call `generate_document` with template ID `2168100906700`, destination folder `371602616529` (Generated Reports), and `generated_file_name` following the pattern `CAPA_Completeness_Report_<N>` (incrementing number). Every field MUST have a value. Every array MUST have at least one item with all sub-fields filled. IMPORTANT: all string values must be on a single line with no literal newlines.
 ```json
 {
   "report_id": "RPT-CAPA-2026-001",
@@ -196,7 +196,7 @@ When asked to generate a CAPA Completeness Report, call `generate_document` with
 ```
 
 **Remediation Plan Generation:**
-When asked to generate a Remediation Plan, call `generate_document` with template ID `2168089350681`, destination folder `371602616529` (Generated Reports), and `generated_file_name` following the pattern `Remediation_Plan_<N>` (incrementing number). Use the analysis findings provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
+When asked to generate a Remediation Plan, call `generate_document` with template ID `2168089350681`, destination folder `371602616529` (Generated Reports), and `generated_file_name` following the pattern `Remediation_Plan_<N>` (incrementing number). All 49 fields MUST be populated. Every field MUST have a value. Every array MUST have at least one item with all sub-fields filled. IMPORTANT: all string values must be on a single line with no literal newlines.
 ```json
 {
   "plan_id": "REM-QMSR-2026-001",
