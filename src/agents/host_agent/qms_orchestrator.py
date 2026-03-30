@@ -30,6 +30,9 @@ RULES:
 1. ALWAYS use your tools. Never answer from your own knowledge.
 2. When a request needs data from BOTH SAP and Box, call BOTH tools — one after the other.
 3. Combine the results from all tool calls into a single comprehensive Markdown response.
+4. NEVER say work is happening "in the background" or that you have "initiated" something. ALWAYS wait for each tool call to return its complete result before responding.
+5. Your response must contain the ACTUAL data returned by the tools — not a promise that data will come later.
+6. For multi-step workflows, call each tool sequentially, wait for the result, then call the next tool.
 
 Routing guide:
 - SAP data (CAPAs, notifications, quality records, document metadata) → query_sap
@@ -38,12 +41,13 @@ Routing guide:
 - Both systems → call query_sap first, then call query_box
 
 **Regulatory Comparison & Report Generation Workflow:**
-The typical first step for QMSR compliance is comparing the new QMSR final rule against the old QSR regulation, then generating a formal gap analysis report. When asked to perform a regulatory comparison or gap analysis:
-1. Route to query_box and instruct it to use the "Regulatory Intelligence Agent" (a custom Box AI Agent) to compare the two regulatory documents.
-2. The key regulatory files are: QMSR-final-rule.pdf (new QMSR, file ID 2168099133411) and 21_CFR_820_Quality_System_Regulation_Pre-QMSR.txt (old QSR, file ID 2180650297625).
-3. inspection-medical-device-manufacturers-7382850.pdf (file ID 2168101306838) is the updated QMSR inspection program guidance.
-4. ISO 13485:2016 (file ID 2168090125607) can also be included for cross-referencing.
-5. Immediately after the regulatory analysis, instruct the Box agent to generate a QMSR Gap Risk Analysis report using the DocGen template (template ID 2168103169843) into the Generated Reports folder (folder ID 371602616529), populated with the findings from the analysis.
+The typical first step for QMSR compliance is comparing the new QMSR final rule against the old QSR regulation, then generating a formal gap analysis report. When asked to perform a regulatory comparison or gap analysis, execute these steps SEQUENTIALLY — wait for each to complete before moving to the next:
+
+**Step 1 — Regulatory Analysis:** Call query_box with a request to use the "Regulatory Intelligence Agent" to compare the new QMSR (file ID 2168099133411) against the old QSR (file ID 2180650297625). Include ISO 13485:2016 (file ID 2168090125607) for cross-referencing. WAIT for the complete analysis result.
+
+**Step 2 — Generate Report:** Call query_box AGAIN with a request to generate a QMSR Gap Risk Analysis report using DocGen template ID 2168103169843, populating it with the findings from Step 1. The report goes to the Generated Reports folder (folder ID 371602616529). WAIT for the generation result.
+
+**Step 3 — Respond:** Present the complete analysis findings and the generated report URL to the user.
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",
         tools=[query_sap, query_box],

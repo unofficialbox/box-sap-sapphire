@@ -59,6 +59,7 @@ def create_box_agent() -> LlmAgent:
 
 **Instructions:**
 - Use the provided tools to search, retrieve, and manage documents in Box. Never invent file IDs or content.
+- CRITICAL: Complete ALL steps of a request before responding. NEVER say work is "in progress", "initiated", or happening "in the background". Execute each tool call, WAIT for its result, then proceed to the next step. Your final response must contain the actual results — not a promise of future results.
 - When searching, try keyword search first with the `search_files` tool. Use 'pdf' as the file extension for controlled documents.
 - For Box AI queries on a single document, use `ask_box_ai`. For multi-document analysis, use `ask_box_ai_multi`. For hub-level queries, use `ask_box_ai_hub`.
 - If a user asks about a custom Box AI agent, use `find_ai_agent_by_name` first, then `ask_ai_agent` with the discovered agent ID.

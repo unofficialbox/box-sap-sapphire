@@ -56,28 +56,39 @@ async def _call_agent(url: str, query: str, agent_label: str = "Agent") -> str:
             async with aconnect_sse(
                 client, "POST", url, json=payload,
             ) as event_source:
+                logger.info("[%s] SSE stream connected", agent_label)
                 async for sse_event in event_source.aiter_sse():
                     if not sse_event.data:
                         continue
                     try:
                         data = json.loads(sse_event.data)
                     except json.JSONDecodeError:
+                        logger.warning("[%s] SSE non-JSON data: %s", agent_label, sse_event.data[:200])
                         continue
 
                     result = data.get("result")
                     if not result:
+                        # Check for error
+                        error = data.get("error")
+                        if error:
+                            logger.error("[%s] SSE error: %s", agent_label, error)
                         continue
+
+                    # Detect event kind
+                    kind = result.get("kind", "")
+                    logger.debug("[%s] SSE event kind=%s state=%s", agent_label, kind, result.get("status", {}).get("state", ""))
 
                     # --- TaskStatusUpdateEvent ---
                     status = result.get("status") or {}
                     state = status.get("state", "")
                     message = status.get("message")
 
-                    if state == "working" and message:
+                    if message:
                         parts = message.get("parts", [])
                         for part in parts:
                             text = part.get("text", "")
                             if text:
+                                logger.info("[%s] progress: %s", agent_label, text[:150])
                                 await progress_queue.put(
                                     f"[{agent_label}] {text}"
                                 )
@@ -88,15 +99,17 @@ async def _call_agent(url: str, query: str, agent_label: str = "Agent") -> str:
                         for part in artifact.get("parts", []):
                             if part.get("kind") == "text" and part.get("text"):
                                 final_text = part["text"]
+                                logger.info("[%s] artifact received (%d chars)", agent_label, len(final_text))
 
-                    # --- Completed status with no artifact (inline) ---
+                    # --- Completed status with inline artifacts ---
                     if state == "completed":
-                        # Some agents embed artifacts at top level
                         artifacts = result.get("artifacts", [])
                         for art in artifacts:
                             for part in art.get("parts", []):
                                 if part.get("kind") == "text" and part.get("text"):
                                     final_text = part["text"]
+                        if final_text:
+                            logger.info("[%s] completed with result (%d chars)", agent_label, len(final_text))
 
     except httpx.ReadError:
         logger.debug("SSE stream closed by %s", agent_label)
