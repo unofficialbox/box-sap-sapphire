@@ -6,6 +6,7 @@ forwarded to the user in real time via a shared asyncio.Queue.
 """
 
 import asyncio
+import logging
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
@@ -16,16 +17,19 @@ from a2a.types import (
     TextPart,
     UnsupportedOperationError,
 )
-from a2a.utils import new_agent_text_message, new_task
 from a2a.utils.errors import ServerError
 from google.adk.artifacts.in_memory_artifact_service import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from google.genai.types import Content
+from google.genai import types
+
+from src.common.converters import convert_genai_part_to_a2a
 
 from .qms_orchestrator import create_root_agent
 from .qms_orchestrator_tools import progress_queue
+
+logger = logging.getLogger(__name__)
 
 KEEPALIVE_INTERVAL = 30  # seconds between heartbeat status updates
 
@@ -49,17 +53,18 @@ class QmsOrchestratorExecutor(AgentExecutor):
         context: RequestContext,
         event_queue: EventQueue,
     ) -> None:
+        # Extract user query from the incoming message
         query = context.get_user_input()
-        task = context.current_task
+        if not query:
+            return
 
-        if not task:
-            if not context.message:
-                return
-            task = new_task(context.message)
-            await event_queue.enqueue_event(task)
+        updater = TaskUpdater(event_queue, context.task_id, context.context_id)
 
-        updater = TaskUpdater(event_queue, task.id, task.context_id)
-        session_id = task.context_id
+        if not context.current_task:
+            await updater.update_status(TaskState.submitted)
+        await updater.update_status(TaskState.working)
+
+        session_id = context.context_id
 
         session = await self._runner.session_service.get_session(
             app_name=self._agent.name,
@@ -74,9 +79,7 @@ class QmsOrchestratorExecutor(AgentExecutor):
                 session_id=session_id,
             )
 
-        content = Content(role="user", parts=[{"text": query}])
-
-        await updater.start_work()
+        content = types.UserContent(parts=[types.Part(text=query)])
 
         # Drain any stale messages from previous runs
         while not progress_queue.empty():
@@ -97,7 +100,9 @@ class QmsOrchestratorExecutor(AgentExecutor):
                     )
                     await updater.update_status(
                         TaskState.working,
-                        message=new_agent_text_message(msg),
+                        message=updater.new_agent_message(
+                            [Part(root=TextPart(text=msg))],
+                        ),
                     )
                 except asyncio.TimeoutError:
                     continue
@@ -113,10 +118,7 @@ class QmsOrchestratorExecutor(AgentExecutor):
             while keepalive_active:
                 await asyncio.sleep(KEEPALIVE_INTERVAL)
                 if keepalive_active:
-                    await updater.update_status(
-                        TaskState.working,
-                        message=new_agent_text_message("Still processing..."),
-                    )
+                    await updater.update_status(TaskState.working)
 
         keepalive_task = asyncio.create_task(keepalive())
 
@@ -130,13 +132,15 @@ class QmsOrchestratorExecutor(AgentExecutor):
                     if (
                         event.content
                         and event.content.parts
-                        and event.content.parts[0].text
                     ):
-                        await updater.add_artifact(
-                            [Part(root=TextPart(text=event.content.parts[0].text))],
-                            name="response",
-                        )
-                        await updater.complete()
+                        parts = [
+                            convert_genai_part_to_a2a(part)
+                            for part in event.content.parts
+                            if (part.text or part.file_data or part.inline_data)
+                        ]
+                        if parts:
+                            await updater.add_artifact(parts)
+                            await updater.update_status(TaskState.completed, final=True)
                 elif event.content and event.content.parts:
                     for part in event.content.parts:
                         # Forward function call info as progress
@@ -153,17 +157,26 @@ class QmsOrchestratorExecutor(AgentExecutor):
                                 desc = f"{desc}: {snippet}{'...' if len(query_arg) > 150 else ''}"
                             await updater.update_status(
                                 TaskState.working,
-                                message=new_agent_text_message(desc),
+                                message=updater.new_agent_message(
+                                    [Part(root=TextPart(text=desc))],
+                                ),
                             )
                         # Forward intermediate LLM text as progress
                         elif hasattr(part, "text") and part.text:
                             await updater.update_status(
                                 TaskState.working,
-                                message=new_agent_text_message(part.text),
+                                message=updater.new_agent_message(
+                                    [Part(root=TextPart(text=part.text))],
+                                ),
                             )
         except Exception as e:
-            await updater.failed(
-                message=new_agent_text_message(f"Task failed with error: {e}")
+            logger.error("Host executor failed: %s", e, exc_info=True)
+            await updater.update_status(
+                TaskState.failed,
+                message=updater.new_agent_message(
+                    [Part(root=TextPart(text=f"Task failed with error: {e}"))],
+                ),
+                final=True,
             )
         finally:
             progress_active = False

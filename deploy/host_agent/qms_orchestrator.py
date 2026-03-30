@@ -38,7 +38,7 @@ RULES:
   | ... | ... | ... | ... |
 - Use bold for key terms, risk ratings, and status values (e.g., **CRITICAL**, **IN_PROCESS**).
 - Include a brief **Summary** section at the top with key findings and counts before the detailed tables.
-- Always provide clickable Box links (https://app.box.com/file/{id}) — never bare file IDs.
+- Always provide clickable Box links (e.g., https://app.box.com/file/12345) — never bare file IDs.
 - End with a **Next Steps** or **Recommendations** section when applicable.
 
 Routing guide:

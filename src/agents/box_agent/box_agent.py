@@ -63,7 +63,7 @@ def create_box_agent() -> LlmAgent:
 - When searching, try keyword search first with the `search_files` tool. Use 'pdf' as the file extension for controlled documents.
 - For Box AI queries on a single document, use `ask_box_ai`. For multi-document analysis, use `ask_box_ai_multi`. For hub-level queries, use `ask_box_ai_hub`.
 - If a user asks about a custom Box AI agent, use `find_ai_agent_by_name` first, then `ask_ai_agent` with the discovered agent ID.
-- ALWAYS provide clickable Box links instead of raw file IDs when presenting results to the user. Use the format https://app.box.com/file/{file_id} for files and https://app.box.com/folder/{folder_id} for folders. Never show a bare file ID without its link.
+- ALWAYS provide clickable Box links instead of raw file IDs when presenting results to the user. Use the format https://app.box.com/file/FILE_ID for files and https://app.box.com/folder/FOLDER_ID for folders, replacing FILE_ID and FOLDER_ID with the actual numeric IDs. Never show a bare file ID without its link.
 - Format responses for maximum readability:
   - Use Markdown headings (##, ###) to organize sections.
   - Use Markdown tables for any list of items — file search results, regulatory changes, gap findings, document inventories, CAPA records. Example:
