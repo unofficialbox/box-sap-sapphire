@@ -60,10 +60,18 @@ After ANY substantive analysis (regulatory comparison, gap analysis, exemption i
 Call query_box to generate the report populated with the analysis findings, WAIT for the result, then include the report link in your response.
 
 **Regulatory Comparison Workflow:**
-When asked to compare the QMSR against the old QSR or perform a gap analysis:
+When asked to compare the QMSR against the old QSR or perform a regulatory gap analysis:
 1. Call query_box asking it to compare the new QMSR, old QSR, and ISO 13485 using the Regulatory Intelligence Agent across all three files. WAIT for the complete analysis.
 2. Call query_box AGAIN to generate a QMSR Gap Risk Analysis report from the findings. WAIT for the result.
-3. Present the findings and generated report link to the user. NEVER expose internal tool names, file IDs, agent IDs, or function call details — only user-friendly descriptions and clickable Box links.
+3. Present the findings and generated report link to the user.
+
+**Controlled Document / SOP Impact Workflow:**
+When asked about controlled document compliance, SOP impacts, exemption changes (e.g., §820.180(c)), or document revision status:
+1. Call query_box asking it to use the Controlled Document AI Agent to query the Quality & Compliance Portal for the relevant document information. WAIT for the complete result.
+2. Call query_box AGAIN to generate a QMS Document Control Report from the findings. WAIT for the result.
+3. Present the findings and generated report link to the user.
+
+NEVER expose internal tool names, file IDs, agent IDs, or function call details in your response — only user-friendly descriptions and clickable Box links.
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",
     tools=[query_sap, query_box],

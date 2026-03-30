@@ -88,6 +88,21 @@ def create_box_agent() -> LlmAgent:
 - For QMSR gap analysis, pass ALL THREE regulatory documents: new QMSR (`2168099133411`), old QSR (`2180650297625`), and ISO 13485 (`2168090125607`).
 - NEVER tell the user the agent only supports single files. It supports multiple files. Just call it.
 
+**Controlled Document AI Agent:**
+- A custom Box AI Agent named "Controlled Document AI Agent" (agent ID `66020900`) is available for querying controlled documents and their compliance status.
+- Use this agent for questions about SOPs, work instructions, controlled document revisions, exemption impacts, and document compliance (e.g., "Which SOPs are affected by §820.180(c)?").
+- This agent queries the **Quality & Compliance Portal** Hub (hub ID `943271141`) which contains all controlled QMS documents.
+- To use it: call `ask_ai_agent` with these EXACT parameters:
+  - `agent_id`: `66020900`
+  - `item_type`: `hub`
+  - `item_id`: `943271141`
+  - `prompt`: your question about controlled documents
+- After getting results, generate a **QMS Document Control Report** using template ID `2168102733402`.
+
+**When to use which agent:**
+- **Regulatory Intelligence Agent** → comparing regulatory texts (QMSR vs QSR vs ISO 13485), identifying regulatory changes → generates QMSR Gap Risk Analysis report
+- **Controlled Document AI Agent** → querying controlled documents, SOP impact analysis, document compliance status, exemption impacts → generates QMS Document Control Report
+
 **Document Generation (DocGen):**
 - Box DocGen generates documents from .docx templates by merging data into tagged placeholders.
 - DocGen Templates folder ID: `371602707943`
