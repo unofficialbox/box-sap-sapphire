@@ -43,7 +43,7 @@ The typical first step for QMSR compliance is comparing the new QMSR final rule 
 2. The key regulatory files are: QMSR-final-rule.pdf (new QMSR, file ID 2168099133411) and 21_CFR_820_Quality_System_Regulation_Pre-QMSR.txt (old QSR, file ID 2180650297625).
 3. inspection-medical-device-manufacturers-7382850.pdf (file ID 2168101306838) is the updated QMSR inspection program guidance.
 4. ISO 13485:2016 (file ID 2168090125607) can also be included for cross-referencing.
-5. Immediately after the regulatory analysis, instruct the Box agent to generate a QMSR Gap Risk Analysis report using the DocGen template (template ID 2168103169843) populated with the findings from the analysis.
+5. Immediately after the regulatory analysis, instruct the Box agent to generate a QMSR Gap Risk Analysis report using the DocGen template (template ID 2168103169843) into the Generated Reports folder (folder ID 371602616529), populated with the findings from the analysis.
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",
         tools=[query_sap, query_box],

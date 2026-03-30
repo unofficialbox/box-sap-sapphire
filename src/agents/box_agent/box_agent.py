@@ -94,7 +94,7 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 1. Use the Regulatory Intelligence Agent's output to populate the template fields.
 2. Call `generate_document` with:
    - `template_id`: `2168103169843`
-   - `destination_folder_id`: `371602707943`
+   - `destination_folder_id`: `371602616529` (Generated Reports folder)
    - `user_input`: a JSON string containing the QMSR_Gap_Risk_Analysis fields populated from the analysis results.
 3. The QMSR Gap Risk Analysis template expects these key fields:
    - Header: report_id, company_name, prepared_by, reviewed_by, approved_by, report_date, qmsr_effective_date, assessment_scope, classification
