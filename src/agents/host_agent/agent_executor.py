@@ -109,12 +109,40 @@ class QmsOrchestratorExecutor(AgentExecutor):
                         )
                         await updater.complete()
                 elif event.content and event.content.parts:
+                    has_function_call = False
+                    has_text = False
                     for part in event.content.parts:
                         if hasattr(part, "function_call") and part.function_call:
+                            has_function_call = True
+                            fc = part.function_call
+                            # Provide descriptive progress messages
+                            tool_descriptions = {
+                                "query_sap": "Querying SAP Quality Management system",
+                                "query_box": "Querying Box document management system",
+                            }
+                            desc = tool_descriptions.get(fc.name, f"Calling {fc.name}")
+                            # Include query snippet if available
+                            query_arg = (fc.args or {}).get("query", "")
+                            if query_arg:
+                                snippet = query_arg[:120]
+                                desc = f"{desc}: {snippet}{'...' if len(query_arg) > 120 else ''}"
+                            await updater.update_status(
+                                TaskState.working,
+                                message=new_agent_text_message(desc),
+                            )
+                        elif hasattr(part, "text") and part.text:
+                            has_text = True
+                    # Stream intermediate text (LLM thinking/reasoning) as progress
+                    if has_text and not has_function_call:
+                        text_parts = [
+                            p.text for p in event.content.parts
+                            if hasattr(p, "text") and p.text
+                        ]
+                        if text_parts:
                             await updater.update_status(
                                 TaskState.working,
                                 message=new_agent_text_message(
-                                    f"Calling {part.function_call.name}..."
+                                    " ".join(text_parts)
                                 ),
                             )
         except Exception as e:

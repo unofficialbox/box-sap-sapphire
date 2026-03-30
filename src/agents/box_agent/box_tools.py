@@ -507,10 +507,13 @@ def get_docgen_template_tags(
         return {"status": "error", "error_message": str(e), "template_id": template_id}
 
 
+GENERATED_REPORTS_FOLDER_ID = os.getenv("BOX_GENERATED_REPORTS_FOLDER_ID", "371602616529")
+
+
 def generate_document(
     template_id: str,
-    destination_folder_id: str,
     user_input: str,
+    destination_folder_id: Optional[str] = None,
     generated_file_name: Optional[str] = None,
     output_type: str = "pdf",
     tool_context: Optional[ToolContext] = None,
@@ -522,8 +525,9 @@ def generate_document(
 
     Args:
         template_id: The Box file ID of the DocGen template.
-        destination_folder_id: The Box folder ID where the generated document will be saved.
         user_input: JSON string of key-value pairs to merge into the template fields.
+        destination_folder_id: The Box folder ID where the generated document will be saved.
+            Defaults to the Generated Reports folder (371602616529).
         generated_file_name: Optional name for the output file (without extension).
         output_type: Output format — 'pdf' or 'docx' (defaults to 'pdf').
 
@@ -533,6 +537,9 @@ def generate_document(
     import json as _json
 
     try:
+        if not destination_folder_id:
+            destination_folder_id = GENERATED_REPORTS_FOLDER_ID
+
         logger.info(
             "generate_document: template=%s folder=%s output=%s",
             template_id, destination_folder_id, output_type,
@@ -580,8 +587,8 @@ def generate_document(
 
 def generate_document_batch(
     template_id: str,
-    destination_folder_id: str,
     document_generation_data: str,
+    destination_folder_id: Optional[str] = None,
     output_type: str = "pdf",
     tool_context: Optional[ToolContext] = None,
 ) -> dict[str, Any]:
@@ -591,9 +598,10 @@ def generate_document_batch(
 
     Args:
         template_id: The Box file ID of the DocGen template.
-        destination_folder_id: The Box folder ID where generated documents will be saved.
         document_generation_data: JSON string — an array of objects, each with
             'generated_file_name' (str) and 'user_input' (dict of template field values).
+        destination_folder_id: The Box folder ID where generated documents will be saved.
+            Defaults to the Generated Reports folder (371602616529).
         output_type: Output format — 'pdf' or 'docx' (defaults to 'pdf').
 
     Returns:
@@ -602,6 +610,9 @@ def generate_document_batch(
     import json as _json
 
     try:
+        if not destination_folder_id:
+            destination_folder_id = GENERATED_REPORTS_FOLDER_ID
+
         logger.info(
             "generate_document_batch: template=%s folder=%s output=%s",
             template_id, destination_folder_id, output_type,
