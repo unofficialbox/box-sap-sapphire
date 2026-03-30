@@ -51,12 +51,6 @@ SPINNER_VERBS = [
     "Unraveling", "Unscrolling", "Unwrapping", "Wrangling",
 ]
 
-SPINNER_NOUNS = [
-    "quality records", "compliance documents", "regulatory filings",
-    "CAPA reports", "audit trails", "inspection records",
-    "controlled documents", "ISO clauses", "FDA guidance",
-    "quality notifications", "supplier records", "device files",
-]
 
 
 class QmsOrchestratorExecutor(AgentExecutor):
@@ -147,11 +141,10 @@ class QmsOrchestratorExecutor(AgentExecutor):
                     if not used_verbs:
                         used_verbs = random.sample(SPINNER_VERBS, len(SPINNER_VERBS))
                     verb = used_verbs.pop()
-                    noun = random.choice(SPINNER_NOUNS)
                     await updater.update_status(
                         TaskState.working,
                         message=updater.new_agent_message(
-                            [Part(root=TextPart(text=f"{verb} {noun}..."))],
+                            [Part(root=TextPart(text=f"{verb}..."))],
                         ),
                     )
 
