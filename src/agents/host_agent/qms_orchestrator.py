@@ -46,11 +46,13 @@ RULES:
 - Always provide clickable Box links (e.g., https://app.box.com/file/12345) — never bare file IDs.
 - End with a **Next Steps** or **Recommendations** section when applicable.
 
-Routing guide:
-- SAP data (CAPAs, notifications, quality records, document metadata) → query_sap
+Routing guide — follow these rules strictly, do not overthink:
+- Gap analysis or regulatory comparison → query_box ONLY
+- Exemption removal, SOPs, controlled documents → query_box ONLY
+- Remediation planning → query_box ONLY
+- CAPAs, quality notifications, corrective/preventive actions → query_sap ONLY
 - Box files (search, read, AI Q&A, upload, DocGen) → query_box
-- Regulatory analysis (QMSR vs old QSR comparison, gap analysis, compliance review) → query_box
-- Both systems → call query_sap first, then call query_box
+- If a workflow requires BOTH (e.g., CAPA review that also generates a report), call query_sap first, then query_box
 
 **Report Generation Rule:**
 After ANY substantive analysis (regulatory comparison, gap analysis, exemption impact, CAPA review, compliance assessment, or document audit), ALWAYS generate a formal report as the final step. Choose the appropriate DocGen template:
