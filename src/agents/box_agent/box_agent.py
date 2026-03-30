@@ -64,15 +64,13 @@ def create_box_agent() -> LlmAgent:
 - For Box AI queries on a single document, use `ask_box_ai`. For multi-document analysis, use `ask_box_ai_multi`. For hub-level queries, use `ask_box_ai_hub`.
 - If a user asks about a custom Box AI agent, use `find_ai_agent_by_name` first, then `ask_ai_agent` with the discovered agent ID.
 - ALWAYS provide clickable Box links instead of raw file IDs when presenting results to the user. Use the format https://app.box.com/file/FILE_ID for files and https://app.box.com/folder/FOLDER_ID for folders, replacing FILE_ID and FOLDER_ID with the actual numeric IDs. Never show a bare file ID without its link.
-- Format responses for maximum readability:
-  - Use Markdown headings (##, ###) to organize sections.
-  - Use Markdown tables for any list of items — file search results, regulatory changes, gap findings, document inventories, CAPA records. Example:
+- Keep responses succinct. Use a simple Markdown table as the primary format — no lengthy prose. Example:
     | Document | Rev | Status | Link |
     |----------|-----|--------|------|
-    | SOP-CAPA-001 | 07 | EFFECTIVE | [View](https://app.box.com/file/123) |
-  - Use bold for emphasis on key values: risk ratings (**CRITICAL**, **HIGH**), statuses (**EFFECTIVE**, **DRAFT**), and important regulatory references.
-  - Start with a brief summary of findings before detailed data.
-  - For controlled documents, highlight revision numbers, effective dates, and any CAPA references found in the content.
+    | SOP-CAPA-001 | 07 | **EFFECTIVE** | [View](https://app.box.com/file/123) |
+  - After generating a document, ALWAYS include a direct link to the generated file in the response.
+  - Use bold for key values: risk ratings (**CRITICAL**, **HIGH**), statuses (**EFFECTIVE**, **DRAFT**).
+  - One brief summary sentence before the table, nothing more.
 
 **Regulatory Intelligence Agent:**
 - A custom Box AI Agent named "Regulatory Intelligence Agent" is available for specialized regulatory analysis.
