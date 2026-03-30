@@ -95,17 +95,43 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 2. Call `generate_document` with:
    - `template_id`: `2168103169843`
    - `destination_folder_id`: `371602616529` (Generated Reports folder)
-   - `user_input`: a JSON string containing the QMSR_Gap_Risk_Analysis fields populated from the analysis results.
-3. The QMSR Gap Risk Analysis template expects these key fields:
-   - Header: report_id, company_name, prepared_by, reviewed_by, approved_by, report_date, qmsr_effective_date, assessment_scope, classification
-   - Executive summary: executive_summary, regulatory_background
-   - Regulatory changes table (array `regulatory_changes`): each with change_area, old_qsr_requirement, new_qmsr_requirement, impact_level
-   - Gap items table (array `gap_items`): each with gap_id, iso_clause, qsr_reference, gap_description, risk_rating, current_state
-   - Risk summary: total_gaps, critical_gaps, high_risk_gaps, medium_low_gaps
-   - §820.180(c) impact: exemption_removal_impact
-   - Inspectable records table (array `inspectable_records`): each with record_type, previous_status, new_status, compliance_action
-   - Closing: recommendations, prepared_date, reviewed_date, approved_date
-4. After generating, check the job status and provide the output file URL.
+   - `user_input`: a JSON string containing the fields below. IMPORTANT: all string values must be on a single line with no literal newlines — use spaces instead.
+3. The QMSR Gap Risk Analysis template expects this exact JSON structure:
+```json
+{
+  "report_id": "RPT-GAP-2026-001",
+  "company_name": "MedTech Precision Devices, Inc.",
+  "prepared_by": "Name, Title",
+  "reviewed_by": "Name, Title",
+  "approved_by": "Name, Title",
+  "report_date": "2026-03-29",
+  "qmsr_effective_date": "2026-02-02",
+  "assessment_scope": "Full QMS assessment against FDA QMSR...",
+  "classification": "CONFIDENTIAL",
+  "executive_summary": "Summary text on a single line...",
+  "regulatory_background": "Background text on a single line...",
+  "regulatory_changes": [
+    {"change_area": "...", "old_qsr_requirement": "...", "new_qmsr_requirement": "...", "impact_level": "CRITICAL|HIGH|MEDIUM|LOW"}
+  ],
+  "gap_analysis_summary": "Summary text...",
+  "gap_items": [
+    {"gap_id": "GAP-001", "iso_clause": "4.2.4", "qsr_reference": "820.40", "gap_description": "...", "risk_rating": "CRITICAL|HIGH|MEDIUM|LOW", "current_state": "..."}
+  ],
+  "total_gaps": "23",
+  "critical_gaps": "3",
+  "high_risk_gaps": "8",
+  "medium_low_gaps": "12",
+  "exemption_removal_impact": "Impact text...",
+  "inspectable_records": [
+    {"record_type": "...", "previous_status": "...", "new_status": "...", "compliance_action": "..."}
+  ],
+  "recommendations": "Recommendations text...",
+  "prepared_date": "2026-03-29",
+  "reviewed_date": "2026-03-29",
+  "approved_date": "2026-03-29"
+}
+```
+4. After generating, check the job status with `get_docgen_job_status` or `list_docgen_batch_jobs` and provide the output file URL.
 """,
         tools=[
             search_files,

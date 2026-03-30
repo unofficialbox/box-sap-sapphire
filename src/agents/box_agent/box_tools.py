@@ -541,7 +541,20 @@ def generate_document(
 
         # Parse user_input from JSON string to dict
         if isinstance(user_input, str):
-            input_data = _json.loads(user_input)
+            # Sanitize: LLMs often produce literal newlines/tabs inside JSON
+            # string values which are invalid control characters in JSON.
+            import re
+            sanitized = re.sub(
+                r'(?<=": ")((?:[^"\\]|\\.)*)(?=")',
+                lambda m: m.group(0).replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t"),
+                user_input,
+            )
+            try:
+                input_data = _json.loads(sanitized)
+            except _json.JSONDecodeError:
+                # Fallback: aggressively replace all unescaped control chars
+                cleaned = user_input.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+                input_data = _json.loads(cleaned)
         else:
             input_data = user_input
 
@@ -597,7 +610,11 @@ def generate_document_batch(
 
         # Parse document_generation_data from JSON string to list
         if isinstance(document_generation_data, str):
-            gen_data = _json.loads(document_generation_data)
+            try:
+                gen_data = _json.loads(document_generation_data)
+            except _json.JSONDecodeError:
+                cleaned = document_generation_data.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+                gen_data = _json.loads(cleaned)
         else:
             gen_data = document_generation_data
 
