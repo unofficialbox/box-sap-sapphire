@@ -71,8 +71,8 @@ def create_app():
         name="Box Agent",
         description=(
             "Manages controlled documents in Box for medical device quality "
-            "management, including search, AI-powered Q&A, CRUD operations, "
-            "and document generation from DocGen templates"
+            "management, including search, AI-powered Q&A, regulatory intelligence "
+            "analysis, CRUD operations, and document generation from DocGen templates"
         ),
         url=app_url,
         version="1.0.0",

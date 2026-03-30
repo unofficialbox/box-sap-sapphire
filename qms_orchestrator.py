@@ -54,7 +54,7 @@ Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 2
 def create_agent_card(agent, agent_url: str) -> AgentCard:
     """Create the A2A agent card for the QMS orchestrator."""
     return AgentCard(
-        name="Quality Management Orchestator",
+        name="Quality Management Orchestrator",
         description=agent.description,
         url=agent_url,
         version="1.0.0",

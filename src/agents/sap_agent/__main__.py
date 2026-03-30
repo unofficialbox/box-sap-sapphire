@@ -53,11 +53,11 @@ def create_app():
         ),
         tags=["sap", "quality", "capa", "notification", "iso13485", "qmsr", "fda"],
         examples=[
-            "Show me all open CAPAs",
-            "Get details for quality notification 000300000005",
-            "What supplier quality blocks exist?",
-            "Find documents related to ISO 13485 clause 8.5.2",
-            "Search for preventive actions that are still in process",
+            "Show me all open CAPAs related to the QMSR transition",
+            "Get details for quality notification 000300000005 including corrective actions",
+            "Which supplier quality notifications were created in January 2026?",
+            "Find controlled document metadata referencing ISO 13485 clause 8.5.2",
+            "What preventive actions are still in process for the §820.180(c) remediation?",
         ],
     )
 
