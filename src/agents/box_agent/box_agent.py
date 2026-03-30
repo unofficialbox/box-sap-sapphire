@@ -122,6 +122,7 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 2. Call `generate_document` with:
    - `template_id`: `2168103169843`
    - `destination_folder_id`: `371602616529` (Generated Reports folder)
+   - `generated_file_name`: Use the pattern `QMSR_Gap_Risk_Analysis_<N>` where `<N>` is an incrementing number (e.g., `QMSR_Gap_Risk_Analysis_1`, `QMSR_Gap_Risk_Analysis_2`). Do NOT include `.docx`, `.pdf`, or the word "Template" in the name.
    - `user_input`: a JSON string containing the fields below. IMPORTANT: all string values must be on a single line with no literal newlines — use spaces instead.
 3. The QMSR Gap Risk Analysis template expects this exact JSON structure:
 ```json
@@ -161,7 +162,7 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 4. After generating, check the job status with `get_docgen_job_status` or `list_docgen_batch_jobs` and provide the output file URL.
 
 **CAPA Completeness Report Generation:**
-When asked to generate a CAPA Completeness Report, call `generate_document` with template ID `2168100906700` and destination folder `371602616529` (Generated Reports). Use the SAP data provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
+When asked to generate a CAPA Completeness Report, call `generate_document` with template ID `2168100906700`, destination folder `371602616529` (Generated Reports), and `generated_file_name` following the pattern `CAPA_Completeness_Report_<N>` (incrementing number). Use the SAP data provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
 ```json
 {
   "report_id": "RPT-CAPA-2026-001",
@@ -193,6 +194,47 @@ When asked to generate a CAPA Completeness Report, call `generate_document` with
   ],
   "compliance_assessment": "Overall compliance assessment...",
   "recommendations": "Recommendations..."
+}
+```
+
+**Remediation Plan Generation:**
+When asked to generate a Remediation Plan, call `generate_document` with template ID `2168089350681`, destination folder `371602616529` (Generated Reports), and `generated_file_name` following the pattern `Remediation_Plan_<N>` (incrementing number). Use the analysis findings provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
+```json
+{
+  "plan_id": "REM-QMSR-2026-001",
+  "company_name": "MedTech Precision Devices, Inc.",
+  "prepared_by": "Name, Title",
+  "reviewed_by": "Name, Title",
+  "approved_by": "Name, Title",
+  "plan_date": "2026-03-30",
+  "target_completion_date": "2026-06-30",
+  "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+  "approval_status": "APPROVED|PENDING|DRAFT",
+  "executive_summary": "Summary of remediation plan...",
+  "remediation_scope": "Scope description referencing prior analysis reports...",
+  "total_remediation_items": "47",
+  "document_updates_required": "23",
+  "process_changes_required": "12",
+  "training_requirements": "8",
+  "system_changes_required": "4",
+  "document_remediation_summary": "Summary of document remediation tasks...",
+  "document_tasks": [
+    {"task_id": "DOC-REM-001", "document_id": "DOC-QMS-001", "document_title": "...", "change_description": "...", "owner": "Name", "due_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
+  ],
+  "capa_remediation_summary": "Summary of CAPA remediation tasks...",
+  "capa_tasks": [
+    {"task_id": "CAPA-REM-001", "capa_reference": "000300000007", "remediation_action": "...", "owner": "Name", "due_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
+  ],
+  "process_training_tasks": [
+    {"task_id": "PT-REM-001", "task_category": "Training|Process|System", "description": "...", "owner": "Name", "due_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
+  ],
+  "milestones": [
+    {"milestone": "M1 - Title", "description": "...", "target_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
+  ],
+  "risk_assessment": "Risk assessment text...",
+  "prepared_date": "2026-03-30",
+  "reviewed_date": "2026-03-30",
+  "approved_date": "2026-03-30"
 }
 ```
 """,

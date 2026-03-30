@@ -665,11 +665,35 @@ def generate_document_batch(
         return {"status": "error", "error_message": str(e), "template_id": template_id}
 
 
+_METADATA_APPLIED: set[str] = set()
+
+
+def _apply_regulatory_metadata(client, file_id: str) -> None:
+    """Apply the regulatoryIntelligence metadata template to a generated file."""
+    if file_id in _METADATA_APPLIED:
+        return
+    try:
+        from box_sdk_gen.managers.file_metadata import CreateFileMetadataByIdScope
+
+        client.file_metadata.create_file_metadata_by_id(
+            file_id=file_id,
+            scope=CreateFileMetadataByIdScope.ENTERPRISE,
+            template_key="regulatoryIntelligence",
+            request_body={"processingStatus": "Processing"},
+        )
+        _METADATA_APPLIED.add(file_id)
+        logger.info("Applied regulatoryIntelligence metadata to file %s", file_id)
+    except Exception as e:
+        logger.warning("Failed to apply metadata to file %s: %s", file_id, e)
+
+
 def _enrich_docgen_job(job: dict) -> None:
     """Add output_file_url to a DocGen job dict if output_file is present."""
     output_file = job.get("output_file")
     if isinstance(output_file, dict) and output_file.get("id"):
-        job["output_file_url"] = _box_file_url(output_file["id"])
+        file_id = output_file["id"]
+        job["output_file_url"] = _box_file_url(file_id)
+        _apply_regulatory_metadata(_get_client(), file_id)
 
 
 def get_docgen_job_status(

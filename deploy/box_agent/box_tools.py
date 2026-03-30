@@ -50,6 +50,16 @@ def _get_client():
     return get_ccg_client()
 
 
+def _box_file_url(file_id: str) -> str:
+    """Return a clickable Box web URL for a file."""
+    return f"https://app.box.com/file/{file_id}"
+
+
+def _box_folder_url(folder_id: str) -> str:
+    """Return a clickable Box web URL for a folder."""
+    return f"https://app.box.com/folder/{folder_id}"
+
+
 # ── Search & Read ──────────────────────────────────────────────────────
 
 
@@ -615,6 +625,38 @@ def generate_document_batch(
         return {"status": "error", "error_message": str(e), "template_id": template_id}
 
 
+_METADATA_APPLIED: set[str] = set()
+
+
+def _apply_regulatory_metadata(client, file_id: str) -> None:
+    """Apply the regulatoryIntelligence metadata template to a generated file."""
+    if file_id in _METADATA_APPLIED:
+        return
+    try:
+        from box_sdk_gen.managers.file_metadata import CreateFileMetadataByIdScope
+
+        client.file_metadata.create_file_metadata_by_id(
+            file_id=file_id,
+            scope=CreateFileMetadataByIdScope.ENTERPRISE,
+            template_key="regulatoryIntelligence",
+            request_body={"processingStatus": "Processing"},
+        )
+        _METADATA_APPLIED.add(file_id)
+        logger.info("Applied regulatoryIntelligence metadata to file %s", file_id)
+    except Exception as e:
+        logger.warning("Failed to apply metadata to file %s: %s", file_id, e)
+
+
+def _enrich_docgen_job(job: dict, client=None) -> None:
+    """Add output_file_url and apply metadata to a DocGen job if output_file is present."""
+    output_file = job.get("output_file")
+    if isinstance(output_file, dict) and output_file.get("id"):
+        file_id = output_file["id"]
+        job["output_file_url"] = _box_file_url(file_id)
+        if client:
+            _apply_regulatory_metadata(client, file_id)
+
+
 def get_docgen_job_status(
     job_id: str,
     tool_context: Optional[ToolContext] = None,
@@ -632,6 +674,7 @@ def get_docgen_job_status(
         client = _get_client()
 
         result = box_docgen_get_job_by_id(client, job_id)
+        _enrich_docgen_job(result, client)
 
         logger.info("get_docgen_job_status: retrieved job %s", job_id)
         return {"status": "success", **result}
@@ -658,6 +701,8 @@ def list_docgen_batch_jobs(
         client = _get_client()
 
         results = box_docgen_list_jobs_by_batch(client, batch_id)
+        for job in results:
+            _enrich_docgen_job(job, client)
 
         logger.info("list_docgen_batch_jobs: found %d jobs in batch %s", len(results), batch_id)
         return {"status": "success", "batch_id": batch_id, "count": len(results), "jobs": results}
