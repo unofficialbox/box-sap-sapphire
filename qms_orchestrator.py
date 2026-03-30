@@ -71,12 +71,12 @@ def create_agent_card(agent, agent_url: str) -> AgentCard:
                 ),
                 tags=["quality", "capa", "qmsr", "iso13485", "fda", "documents", "sap", "box"],
                 examples=[
-                    "Compare the new QMSR regulation against the old QSR — what are the key changes?",
-                    "Show me all open CAPAs",
-                    "What documents were updated for CAPA 000300000005?",
-                    "What does our incoming inspection SOP say about trace metals?",
-                    "Show me supplier quality issues for RM-00078234",
-                    "What preventive actions are still in process?",
+                    "Compare the new QMSR final rule against the old 21 CFR 820 QSR and generate a gap analysis report",
+                    "What changed with the §820.180(c) exemption removal and which of our SOPs are affected?",
+                    "Show me all open CAPAs related to the QMSR transition and their current status",
+                    "Which controlled documents were revised in January 2026 for QMSR compliance?",
+                    "What does our management review SOP say about FDA inspection readiness under the new QMSR?",
+                    "Are there any supplier quality notifications tied to CAPA 000300000005?",
                 ],
             )
         ],
