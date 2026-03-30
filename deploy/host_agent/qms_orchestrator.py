@@ -71,6 +71,12 @@ When asked about controlled document compliance, SOP impacts, exemption changes 
 2. Call query_box AGAIN to generate a QMS Document Control Report from the findings. WAIT for the result.
 3. Present the findings and generated report link to the user.
 
+**CAPA Review Workflow:**
+When asked about CAPAs, quality notifications, corrective/preventive actions, or CAPA completeness:
+1. Call query_sap to retrieve the CAPA data (notifications, tasks, actions, effectiveness status). WAIT for the complete result.
+2. Call query_box asking it to generate a CAPA Completeness Report from the SAP findings. Pass the full SAP data in the request so the Box agent can populate the template. WAIT for the result.
+3. Present the SAP findings and generated report link to the user.
+
 NEVER expose internal tool names, file IDs, agent IDs, or function call details in your response — only user-friendly descriptions and clickable Box links.
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",

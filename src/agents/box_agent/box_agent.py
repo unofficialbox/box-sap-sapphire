@@ -159,6 +159,42 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 }
 ```
 4. After generating, check the job status with `get_docgen_job_status` or `list_docgen_batch_jobs` and provide the output file URL.
+
+**CAPA Completeness Report Generation:**
+When asked to generate a CAPA Completeness Report (template ID `2168100906700`), use the SAP data provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
+```json
+{
+  "report_id": "RPT-CAPA-2026-001",
+  "company_name": "MedTech Precision Devices, Inc.",
+  "prepared_by": "Name, Title",
+  "report_date": "2026-03-30",
+  "assessment_period": "March 2024 - March 2026 (24 months)",
+  "total_capas_assessed": "342",
+  "iso_reference": "ISO 13485:2016 §8.5.2, §8.5.3",
+  "classification": "CONFIDENTIAL",
+  "executive_summary": "Summary of CAPA findings...",
+  "total_capas": "342",
+  "open_capas": "47",
+  "closed_capas": "295",
+  "capas_corrective": "198",
+  "capas_preventive": "144",
+  "capas_missing_verification": "14",
+  "capas_past_due": "3",
+  "avg_closure_days": "62",
+  "capa_records": [
+    {"notification_number": "000300000001", "notification_type": "Q1 - Customer", "description": "...", "priority": "1", "status": "COMPLETED", "plant": "1000", "creation_date": "2025-08-12"}
+  ],
+  "capa_tasks": [
+    {"capa_number": "000300000001", "task_description": "...", "responsible_person": "Name", "task_type": "CORRECTIVE", "task_status": "COMPLETED", "completion_date": "2025-08-26"}
+  ],
+  "missing_verification_summary": "Summary of CAPAs missing verification...",
+  "capas_missing_verification": [
+    {"capa_number": "000300000007", "description": "...", "closed_date": "2025-06-15", "days_since_closure": "245", "assigned_to": "Name"}
+  ],
+  "compliance_assessment": "Overall compliance assessment...",
+  "recommendations": "Recommendations..."
+}
+```
 """,
         tools=[
             search_files,
