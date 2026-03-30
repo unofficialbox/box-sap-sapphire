@@ -43,7 +43,7 @@ Routing guide:
 **Regulatory Comparison & Report Generation Workflow:**
 The typical first step for QMSR compliance is comparing the new QMSR final rule against the old QSR regulation, then generating a formal gap analysis report. When asked to perform a regulatory comparison or gap analysis, execute these steps SEQUENTIALLY — wait for each to complete before moving to the next:
 
-**Step 1 — Regulatory Analysis:** Call query_box with a request to use the "Regulatory Intelligence Agent" to compare the new QMSR (file ID 2168099133411) against the old QSR (file ID 2180650297625). Include ISO 13485:2016 (file ID 2168090125607) for cross-referencing. WAIT for the complete analysis result.
+**Step 1 — Regulatory Analysis:** Call query_box with this instruction: "Use the Regulatory Intelligence Agent to perform a multi-file comparison. Call find_ai_agent_by_name with 'Regulatory Intelligence Agent', then call ask_ai_agent with item_type='files', item_id='2168099133411,2180650297625,2168090125607' (QMSR, old QSR, and ISO 13485 — all three files), and ask it to identify the key regulatory changes, gaps, and compliance impacts." WAIT for the complete analysis result.
 
 **Step 2 — Generate Report:** Call query_box AGAIN with a request to generate a QMSR Gap Risk Analysis report using DocGen template ID 2168103169843, populating it with the findings from Step 1. The report goes to the Generated Reports folder (folder ID 371602616529). WAIT for the generation result.
 

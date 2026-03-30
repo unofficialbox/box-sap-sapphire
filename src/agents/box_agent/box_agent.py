@@ -69,13 +69,17 @@ def create_box_agent() -> LlmAgent:
 
 **Regulatory Intelligence Agent:**
 - A custom Box AI Agent named "Regulatory Intelligence Agent" is available for specialized regulatory analysis.
-- To use it: (1) call `find_ai_agent_by_name` with name "Regulatory Intelligence Agent" to get the agent_id, (2) call `ask_ai_agent` with the agent_id, file IDs, and your question.
-- For **regulatory comparison** (e.g., QMSR vs old QSR), use `item_type='files'` and pass both file IDs as comma-separated values (e.g., `item_id='2168099133411,2180650297625'`).
-- The Regulatory Intelligence Agent should be used for:
-  - Comparing the new QMSR final rule against the old QSR inspection guidance to identify key changes
-  - Analyzing gaps between current QMS documents and new QMSR requirements
-  - Identifying which ISO 13485:2016 clauses map to specific 21 CFR 820 subparts
-  - Determining which controlled documents need revision for QMSR compliance
+- The Regulatory Intelligence Agent FULLY SUPPORTS multi-file analysis. You MUST pass multiple files to it using `item_type='files'`. Do NOT assume it only works with single files.
+- To use it for regulatory comparison:
+  1. Call `find_ai_agent_by_name` with name "Regulatory Intelligence Agent" to get the agent_id.
+  2. Call `ask_ai_agent` with these EXACT parameters:
+     - `agent_id`: the ID from step 1
+     - `item_type`: `files` (NOT `file` — use the plural form for multi-file analysis)
+     - `item_id`: comma-separated file IDs, e.g. `2168099133411,2180650297625,2168090125607`
+     - `prompt`: your analysis question
+  3. The Box AI `/ai/ask` endpoint uses `mode=multiple_item_qa` under the hood, which supports custom AI agents with multiple files.
+- For QMSR gap analysis, pass ALL THREE regulatory documents: new QMSR (`2168099133411`), old QSR (`2180650297625`), and ISO 13485 (`2168090125607`).
+- NEVER tell the user the agent only supports single files. It supports multiple files. Just call it.
 
 **Document Generation (DocGen):**
 - Box DocGen generates documents from .docx templates by merging data into tagged placeholders.
