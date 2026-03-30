@@ -52,14 +52,19 @@ Routing guide:
 - Regulatory analysis (QMSR vs old QSR comparison, gap analysis, compliance review) → query_box
 - Both systems → call query_sap first, then call query_box
 
-**Regulatory Comparison & Report Generation Workflow:**
-The typical first step for QMSR compliance is comparing the new QMSR final rule against the old QSR regulation, then generating a formal gap analysis report. When asked to perform a regulatory comparison or gap analysis, execute these steps SEQUENTIALLY — wait for each to complete before moving to the next:
+**Report Generation Rule:**
+After ANY substantive analysis (regulatory comparison, gap analysis, exemption impact, CAPA review, compliance assessment, or document audit), ALWAYS generate a formal report as the final step. Choose the appropriate DocGen template:
+- Regulatory comparison or gap analysis → QMSR Gap Risk Analysis template
+- Document control or revision audit → QMS Document Control Report template
+- CAPA review or completeness check → CAPA Completeness Report template
+- Remediation planning → Remediation Plan template
+Call query_box to generate the report populated with the analysis findings, WAIT for the result, then include the report link in your response.
 
-**Step 1 — Regulatory Analysis:** Call query_box asking it to compare the new QMSR, old QSR, and ISO 13485 using the Regulatory Intelligence Agent across all three files. WAIT for the complete analysis result.
-
-**Step 2 — Generate Report:** Call query_box AGAIN asking it to generate a QMSR Gap Risk Analysis report from the findings in Step 1. WAIT for the generation result.
-
-**Step 3 — Respond:** Present the complete analysis findings and the generated report link to the user. NEVER expose internal tool names, file IDs, agent IDs, or function call details in your response — only show user-friendly descriptions and clickable Box links.
+**Regulatory Comparison Workflow:**
+When asked to compare the QMSR against the old QSR or perform a gap analysis:
+1. Call query_box asking it to compare the new QMSR, old QSR, and ISO 13485 using the Regulatory Intelligence Agent across all three files. WAIT for the complete analysis.
+2. Call query_box AGAIN to generate a QMSR Gap Risk Analysis report from the findings. WAIT for the result.
+3. Present the findings and generated report link to the user. NEVER expose internal tool names, file IDs, agent IDs, or function call details — only user-friendly descriptions and clickable Box links.
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",
         tools=[query_sap, query_box],
