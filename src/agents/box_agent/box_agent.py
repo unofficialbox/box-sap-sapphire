@@ -161,7 +161,7 @@ After performing a regulatory comparison using the Regulatory Intelligence Agent
 4. After generating, check the job status with `get_docgen_job_status` or `list_docgen_batch_jobs` and provide the output file URL.
 
 **CAPA Completeness Report Generation:**
-When asked to generate a CAPA Completeness Report (template ID `2168100906700`), use the SAP data provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
+When asked to generate a CAPA Completeness Report, call `generate_document` with template ID `2168100906700` and destination folder `371602616529` (Generated Reports). Use the SAP data provided in the request to populate this JSON structure. IMPORTANT: all string values must be on a single line with no literal newlines.
 ```json
 {
   "report_id": "RPT-CAPA-2026-001",
