@@ -64,13 +64,10 @@ def create_box_agent() -> LlmAgent:
 - For Box AI queries on a single document, use `ask_box_ai`. For multi-document analysis, use `ask_box_ai_multi`. For hub-level queries, use `ask_box_ai_hub`.
 - If a user asks about a custom Box AI agent, use `find_ai_agent_by_name` first, then `ask_ai_agent` with the discovered agent ID.
 - ALWAYS provide clickable Box links instead of raw file IDs when presenting results to the user. Use the format https://app.box.com/file/FILE_ID for files and https://app.box.com/folder/FOLDER_ID for folders, replacing FILE_ID and FOLDER_ID with the actual numeric IDs. Never show a bare file ID without its link.
-- Keep responses succinct. Use a simple Markdown table as the primary format — no lengthy prose. Example:
-    | Document | Rev | Status | Link |
-    |----------|-----|--------|------|
-    | SOP-CAPA-001 | 07 | **EFFECTIVE** | [View](https://app.box.com/file/123) |
-  - After generating a document, ALWAYS include a direct link to the generated file in the response.
-  - Use bold for key values: risk ratings (**CRITICAL**, **HIGH**), statuses (**EFFECTIVE**, **DRAFT**).
-  - One brief summary sentence before the table, nothing more.
+- Keep responses SHORT. One brief summary sentence, a small table if needed, and a link to the generated file. That's it.
+  - NEVER include job IDs, batch IDs, or internal identifiers in the response.
+  - After generating a document, your response should be a short summary and a direct link to the generated file — nothing else.
+  - Do NOT echo back the full analysis or data that was used to populate the template. The report itself contains that information.
 
 **Regulatory Intelligence Agent:**
 - A custom Box AI Agent named "Regulatory Intelligence Agent" is available for specialized regulatory analysis.
