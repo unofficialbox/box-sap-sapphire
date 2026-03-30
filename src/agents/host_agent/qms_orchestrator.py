@@ -10,7 +10,7 @@ from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 
-from qms_orchestrator_tools import query_box, query_sap
+from .qms_orchestrator_tools import query_box, query_sap
 
 
 def create_root_agent() -> LlmAgent:

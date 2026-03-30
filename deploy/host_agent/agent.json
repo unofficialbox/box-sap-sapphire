@@ -1,6 +1,6 @@
 {
-  "name": "Quality Management Orchestator",
-  "description": "Orchestrates quality management workflows across SAP and Box systems for CAPA tracking, document management, and QMSR compliance.",
+  "name": "Quality Management Orchestrator",
+  "description": "Orchestrates quality management workflows across SAP and Box systems for CAPA tracking, document management, regulatory intelligence analysis, and QMSR compliance.",
   "url": "https://host-agent-268814066700.us-central1.run.app/a2a/host_agent",
   "version": "1.0.0",
   "defaultInputModes": ["text/plain"],
@@ -13,13 +13,14 @@
       "id": "quality_management",
       "name": "Quality Management Orchestrator",
       "description": "Routes quality management queries to SAP and Box agents for CAPA tracking, document management, and QMSR compliance",
-      "tags": ["quality", "capa", "qmsr", "iso13485", "fda", "documents", "sap", "box"],
+      "tags": ["quality", "capa", "qmsr", "iso13485", "fda", "documents", "sap", "box", "regulatory"],
       "examples": [
-        "Show me all open CAPAs",
-        "What documents were updated for CAPA 000300000005?",
-        "What does our incoming inspection SOP say about trace metals?",
-        "Show me supplier quality issues for RM-00078234",
-        "What preventive actions are still in process?"
+        "Compare the new QMSR final rule against the old 21 CFR 820 QSR and generate a gap analysis report",
+        "What changed with the §820.180(c) exemption removal and which of our SOPs are affected?",
+        "Show me all open CAPAs related to the QMSR transition and their current status",
+        "Which controlled documents were revised in January 2026 for QMSR compliance?",
+        "What does our management review SOP say about FDA inspection readiness under the new QMSR?",
+        "Are there any supplier quality notifications tied to CAPA 000300000005?"
       ]
     }
   ]

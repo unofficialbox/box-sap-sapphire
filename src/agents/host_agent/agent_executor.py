@@ -23,7 +23,7 @@ from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai.types import Content
 
-from qms_orchestrator import create_root_agent
+from .qms_orchestrator import create_root_agent
 
 KEEPALIVE_INTERVAL = 15  # seconds between heartbeat status updates
 
