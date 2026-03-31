@@ -1261,8 +1261,34 @@ def run_capa_report(
         return {"status": "error", "error_message": str(e)}
 
 _REMEDIATION_PROMPT = (
-    "Summarize the key findings from these reports: what gaps were found, "
-    "what CAPAs are open, and what documents need updating. Keep it concise."
+    "Analyze these reports and return a JSON object with the following structure. "
+    "Extract real data from the reports — do not use placeholder values.\n\n"
+    "{\n"
+    '  "executive_summary": "2-3 paragraph summary of all findings across reports",\n'
+    '  "total_remediation_items": "<total count of all action items across reports>",\n'
+    '  "document_updates_required": "<count of documents needing updates>",\n'
+    '  "process_changes_required": "<count of process changes needed>",\n'
+    '  "training_requirements": "<count of training items>",\n'
+    '  "system_changes_required": "<count of system changes>",\n'
+    '  "remediation_scope": "<1-2 sentence scope description referencing the source reports>",\n'
+    '  "document_remediation_summary": "<summary of document remediation needs>",\n'
+    '  "document_tasks": [\n'
+    '    {"task_id": "DOC-REM-001", "document_id": "<id>", "document_title": "<title>", '
+    '"change_description": "<what needs to change>", "owner": "<person>", "due_date": "YYYY-MM-DD", "status": "PLANNED"}\n'
+    "  ],\n"
+    '  "capa_remediation_summary": "<summary of CAPA remediation needs>",\n'
+    '  "capa_tasks": [\n'
+    '    {"task_id": "CAPA-REM-001", "capa_reference": "<CAPA number>", '
+    '"remediation_action": "<action>", "owner": "<person>", "due_date": "YYYY-MM-DD", "status": "PLANNED"}\n'
+    "  ],\n"
+    '  "process_training_tasks": [\n'
+    '    {"task_id": "PT-REM-001", "task_category": "Process|Training|System", '
+    '"description": "<task>", "owner": "<person>", "due_date": "YYYY-MM-DD", "status": "PLANNED"}\n'
+    "  ],\n"
+    '  "risk_assessment": "<risk assessment paragraph>"\n'
+    "}\n\n"
+    "Include up to 5 items per task list. Use real document IDs, CAPA numbers, "
+    "and personnel names from the reports. Return ONLY the JSON object, no other text."
 )
 
 
@@ -1308,16 +1334,37 @@ def generate_remediation_plan(
         # Step 2: Use Box AI to analyze all files
         logger.info("generate_remediation_plan: analyzing %d files with Box AI", len(file_ids))
         ai_result = box_ai_ask_file_multi(client, file_ids=file_ids, prompt=_REMEDIATION_PROMPT)
-        ai_answer = _strip_markdown(ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", ""))
-        if not ai_answer:
+        ai_answer_raw = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
+        if not ai_answer_raw:
             return {"status": "error", "error_message": "Box AI returned no analysis results"}
 
-        logger.info("generate_remediation_plan: AI analysis returned %d chars", len(ai_answer))
+        logger.info("generate_remediation_plan: AI analysis returned %d chars", len(ai_answer_raw))
 
-        # Step 3: Build the remediation plan data from the analysis
+        # Step 3: Parse structured data from AI response
         _REMEDIATION_COUNTER += 1
         from datetime import date
         today = date.today().isoformat()
+
+        # Try to parse the AI response as JSON for structured fields
+        # Parse from raw response before stripping markdown (which could corrupt JSON)
+        ai_data = {}
+        try:
+            import re
+            # Extract JSON from the response (may be wrapped in markdown code blocks)
+            json_match = re.search(r'\{[\s\S]*\}', ai_answer_raw)
+            if json_match:
+                ai_data = _json.loads(json_match.group())
+                logger.info("generate_remediation_plan: parsed structured data with %d keys", len(ai_data))
+        except (_json.JSONDecodeError, ValueError) as parse_err:
+            logger.warning("generate_remediation_plan: could not parse JSON from AI response: %s", parse_err)
+
+        # Helper to pull values from parsed AI data with fallbacks
+        def _get(key, fallback):
+            val = ai_data.get(key)
+            return val if val is not None else fallback
+
+        scope_fallback = f"Remediation plan based on analysis of {len(file_ids)} reports: {', '.join(file_names)}"
+        exec_summary = _strip_markdown(str(_get("executive_summary", ai_answer_raw)))
 
         user_input = {
             "plan_id": f"REM-QMSR-2026-{_REMEDIATION_COUNTER:03d}",
@@ -1329,37 +1376,35 @@ def generate_remediation_plan(
             "target_completion_date": "2026-06-30",
             "priority": "CRITICAL",
             "approval_status": "DRAFT",
-            "executive_summary": ai_answer[:2000] if len(ai_answer) > 2000 else ai_answer,
-            "remediation_scope": f"Remediation plan based on analysis of {len(file_ids)} reports: {', '.join(file_names)}",
-            "total_remediation_items": "0",
-            "document_updates_required": "0",
-            "process_changes_required": "0",
-            "training_requirements": "0",
-            "system_changes_required": "0",
-            "document_remediation_summary": "See executive summary for document remediation details extracted from source reports.",
-            "document_tasks": [
+            "executive_summary": exec_summary[:3000] if len(exec_summary) > 3000 else exec_summary,
+            "remediation_scope": _strip_markdown(str(_get("remediation_scope", scope_fallback))),
+            "total_remediation_items": str(_get("total_remediation_items", "0")),
+            "document_updates_required": str(_get("document_updates_required", "0")),
+            "process_changes_required": str(_get("process_changes_required", "0")),
+            "training_requirements": str(_get("training_requirements", "0")),
+            "system_changes_required": str(_get("system_changes_required", "0")),
+            "document_remediation_summary": _strip_markdown(str(_get("document_remediation_summary", "Document remediation details extracted from source reports."))),
+            "document_tasks": _get("document_tasks", [
                 {"task_id": "DOC-REM-001", "document_id": "TBD", "document_title": "See executive summary", "change_description": "Updates identified from source report analysis", "owner": "Quality Assurance", "due_date": "2026-06-30", "status": "PLANNED"}
-            ],
-            "capa_remediation_summary": "See executive summary for CAPA remediation details extracted from source reports.",
-            "capa_tasks": [
+            ]),
+            "capa_remediation_summary": _strip_markdown(str(_get("capa_remediation_summary", "CAPA remediation details extracted from source reports."))),
+            "capa_tasks": _get("capa_tasks", [
                 {"task_id": "CAPA-REM-001", "capa_reference": "TBD", "remediation_action": "Actions identified from source report analysis", "owner": "Quality Assurance", "due_date": "2026-06-30", "status": "PLANNED"}
-            ],
-            "process_training_tasks": [
+            ]),
+            "process_training_tasks": _get("process_training_tasks", [
                 {"task_id": "PT-REM-001", "task_category": "Process", "description": "Process and training tasks identified from source report analysis", "owner": "Quality Assurance", "due_date": "2026-06-30", "status": "PLANNED"}
-            ],
+            ]),
             "milestones": [
                 {"milestone": "M1 - Remediation Plan Approved", "description": "Review and approve remediation plan", "target_date": today, "status": "IN_PROGRESS"},
-                {"milestone": "M2 - Full Remediation Complete", "description": "All remediation tasks completed and verified", "target_date": "2026-06-30", "status": "PLANNED"}
+                {"milestone": "M2 - Critical Document Updates", "description": "Complete all critical document revisions", "target_date": "2026-04-30", "status": "PLANNED"},
+                {"milestone": "M3 - CAPA Effectiveness Verification", "description": "Complete effectiveness verification for all identified CAPAs", "target_date": "2026-05-31", "status": "PLANNED"},
+                {"milestone": "M4 - Full Remediation Complete", "description": "All remediation tasks completed and verified", "target_date": "2026-06-30", "status": "PLANNED"},
             ],
-            "risk_assessment": "Risk assessment derived from source report analysis. See executive summary for detailed findings.",
+            "risk_assessment": _strip_markdown(str(_get("risk_assessment", "Risk assessment derived from source report analysis."))),
             "prepared_date": today,
             "reviewed_date": today,
             "approved_date": today,
         }
-
-        # Try to parse structured data from AI response to improve the template
-        # The AI analysis contains the real details — they go into executive_summary
-        # which is the primary content field of the remediation plan
 
         # Step 4: Generate the document
         logger.info("generate_remediation_plan: generating document from template")
