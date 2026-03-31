@@ -60,7 +60,7 @@ Call query_box to generate the report populated with the analysis findings, WAIT
 When asked to compare the QMSR against the old QSR or perform a regulatory gap analysis:
 1. Call query_box asking it to compare the new QMSR, old QSR, and ISO 13485 using the Regulatory Intelligence Agent across all three files. WAIT for the complete analysis.
 2. Call query_box AGAIN to generate a QMSR Gap Risk Analysis report from the findings. WAIT for the result.
-3. Present the findings and generated report link to the user.
+3. Present ONLY: a one-sentence summary, a table of the top 3 highest-impact gap items (columns: Area, ISO Clause, Impact, Risk Rating), and a link to the generated report. Nothing else.
 
 **Controlled Document / SOP Impact Workflow:**
 When asked about controlled document compliance, SOP impacts, exemption changes (e.g., §820.180(c)), or document revision status:
