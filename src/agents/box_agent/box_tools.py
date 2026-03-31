@@ -1218,33 +1218,99 @@ def run_capa_report(
         from datetime import date
         today = date.today().isoformat()
 
+        # Parse structured data from the SAP data string
+        notifications = []
+        tasks = []
+        try:
+            import json as _json
+            import re
+            # The sap_data may be JSON or contain JSON fragments
+            json_match = re.search(r'\{[\s\S]*\}', sap_data)
+            if json_match:
+                parsed = _json.loads(json_match.group())
+                # Handle various shapes the orchestrator might pass
+                if isinstance(parsed, dict):
+                    notifications = parsed.get("notifications", [])
+                    tasks = parsed.get("tasks", [])
+                    # Also check for nested structures
+                    if not notifications and "count" in parsed:
+                        notifications = parsed.get("notifications", [])
+            # Try parsing as a list
+            if not notifications:
+                list_match = re.search(r'\[[\s\S]*\]', sap_data)
+                if list_match:
+                    parsed_list = _json.loads(list_match.group())
+                    if parsed_list and isinstance(parsed_list[0], dict):
+                        if "QualityNotification" in parsed_list[0] or "NotificationType" in parsed_list[0]:
+                            notifications = parsed_list
+                        elif "task_type" in parsed_list[0] or "TaskType" in parsed_list[0]:
+                            tasks = parsed_list
+        except Exception as parse_err:
+            logger.warning("run_capa_report: could not parse SAP data as JSON: %s", parse_err)
+
+        # Compute statistics from parsed notifications
+        total = len(notifications)
+        open_count = sum(1 for n in notifications if str(n.get("NotificationStatus", n.get("status", ""))).upper() == "IN_PROCESS")
+        closed_count = sum(1 for n in notifications if str(n.get("NotificationStatus", n.get("status", ""))).upper() == "COMPLETED")
+        # Count corrective/preventive from tasks if available
+        corrective = sum(1 for t in tasks if str(t.get("TaskType", t.get("task_type", ""))).upper() == "CORRECTIVE")
+        preventive = sum(1 for t in tasks if str(t.get("TaskType", t.get("task_type", ""))).upper() == "PREVENTIVE")
+
+        # Build CAPA records for the template (up to 5)
+        capa_records = []
+        for n in notifications[:5]:
+            capa_records.append({
+                "notification_number": str(n.get("QualityNotification", n.get("notification_number", ""))),
+                "notification_type": str(n.get("NotificationType", n.get("notification_type", ""))),
+                "description": str(n.get("NotificationText", n.get("description", ""))),
+                "priority": str(n.get("NotificationPriority", n.get("priority", ""))),
+                "status": str(n.get("NotificationStatus", n.get("status", ""))),
+                "plant": str(n.get("Plant", n.get("plant", "1000"))),
+                "creation_date": str(n.get("CreationDate", n.get("creation_date", today))),
+            })
+        if not capa_records:
+            capa_records = [{"notification_number": "N/A", "notification_type": "N/A", "description": "No structured notification data available", "priority": "N/A", "status": "N/A", "plant": "N/A", "creation_date": "N/A"}]
+
+        # Build CAPA tasks for the template (up to 5)
+        capa_tasks = []
+        for t in tasks[:5]:
+            capa_tasks.append({
+                "capa_number": str(t.get("QualityNotification", t.get("capa_number", ""))),
+                "task_description": str(t.get("TaskText", t.get("task_description", ""))),
+                "responsible_person": str(t.get("ResponsiblePerson", t.get("responsible_person", ""))),
+                "task_type": str(t.get("TaskType", t.get("task_type", "CORRECTIVE"))),
+                "task_status": str(t.get("TaskStatus", t.get("task_status", "IN_PROCESS"))),
+                "completion_date": str(t.get("CompletionDate", t.get("completion_date", ""))),
+            })
+        if not capa_tasks:
+            capa_tasks = [{"capa_number": "N/A", "task_description": "No structured task data available", "responsible_person": "N/A", "task_type": "N/A", "task_status": "N/A", "completion_date": "N/A"}]
+
+        # Use the raw SAP text as executive summary (strip markdown for template)
+        exec_summary = _strip_markdown(sap_data[:3000] if len(sap_data) > 3000 else sap_data)
+
         user_input = {
             "report_id": f"RPT-CAPA-2026-{_CAPA_REPORT_COUNTER:03d}",
             "company_name": "MedTech Precision Devices, Inc.",
             "prepared_by": "Quality Management System",
             "report_date": today,
             "assessment_period": "March 2024 - March 2026 (24 months)",
-            "total_capas_assessed": "0",
+            "total_capas_assessed": str(total) if total else str(len(capa_records)),
             "iso_reference": "ISO 13485:2016 §8.5.2, §8.5.3",
             "classification": "CONFIDENTIAL",
-            "executive_summary": sap_data[:3000] if len(sap_data) > 3000 else sap_data,
-            "total_capas": "0",
-            "open_capas": "0",
-            "closed_capas": "0",
-            "capas_corrective": "0",
-            "capas_preventive": "0",
+            "executive_summary": exec_summary,
+            "total_capas": str(total) if total else str(len(capa_records)),
+            "open_capas": str(open_count),
+            "closed_capas": str(closed_count),
+            "capas_corrective": str(corrective),
+            "capas_preventive": str(preventive),
             "capas_missing_verification": "0",
             "capas_past_due": "0",
             "avg_closure_days": "0",
-            "capa_records": [
-                {"notification_number": "See executive summary", "notification_type": "See details", "description": "CAPA records from SAP data", "priority": "1", "status": "IN_PROCESS", "plant": "1000", "creation_date": today}
-            ],
-            "capa_tasks": [
-                {"capa_number": "See executive summary", "task_description": "CAPA tasks from SAP data", "responsible_person": "Quality Assurance", "task_type": "CORRECTIVE", "task_status": "IN_PROCESS", "completion_date": ""}
-            ],
-            "missing_verification_summary": "See executive summary for CAPAs missing verification from SAP data.",
-            "compliance_assessment": "See executive summary for full compliance assessment based on SAP CAPA data.",
-            "recommendations": "See executive summary for recommendations based on SAP CAPA analysis.",
+            "capa_records": capa_records,
+            "capa_tasks": capa_tasks,
+            "missing_verification_summary": "Effectiveness verification status to be determined from detailed CAPA task analysis.",
+            "compliance_assessment": "CAPA system assessment based on SAP Quality Management data. See executive summary for detailed notification and task analysis.",
+            "recommendations": "1. Review all open CAPAs for timely closure. 2. Complete effectiveness verification for closed CAPAs. 3. Ensure CAPA procedures align with ISO 13485:2016 §8.5.2 and §8.5.3 requirements.",
         }
 
         logger.info("run_capa_report: generating report")
