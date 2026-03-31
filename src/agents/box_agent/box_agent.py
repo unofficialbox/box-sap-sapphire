@@ -17,16 +17,9 @@ from .box_tools import (
     create_folder,
     find_ai_agent_by_name,
     generate_document,
-    generate_document_batch,
-    get_docgen_job_status,
-    get_docgen_template_by_id,
-    get_docgen_template_by_name,
-    get_docgen_template_tags,
     get_file_content,
     get_file_info,
     get_folder_info,
-    list_docgen_batch_jobs,
-    list_docgen_templates,
     search_files,
     upload_file,
 )
@@ -104,7 +97,7 @@ All string values must be on a single line — no literal newlines.
 Keep responses SHORT — just a summary sentence and a link to the generated file. NEVER include job IDs or batch IDs.
 
 Destination folder for all reports: `371602616529` (Generated Reports).
-`generate_document` automatically waits for completion and returns the output file URL — do NOT call `get_docgen_job_status` or `list_docgen_batch_jobs` separately.
+`generate_document` automatically waits for completion and returns the output file URL.
 
 **QMSR Gap Risk Analysis** (template `2168103169843`):
 - `generated_file_name`: `QMSR_Gap_Risk_Analysis_<N>` (incrementing number, no .docx/.pdf/Template).
@@ -227,13 +220,6 @@ Destination folder for all reports: `371602616529` (Generated Reports).
             find_ai_agent_by_name,
             ask_ai_agent,
             generate_document,
-            generate_document_batch,
-            get_docgen_job_status,
-            list_docgen_batch_jobs,
-            list_docgen_templates,
-            get_docgen_template_by_id,
-            get_docgen_template_by_name,
-            get_docgen_template_tags,
         ],
     )
 
