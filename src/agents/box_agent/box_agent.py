@@ -17,6 +17,7 @@ from .box_tools import (
     create_folder,
     find_ai_agent_by_name,
     generate_document,
+    generate_remediation_plan,
     get_file_content,
     get_file_info,
     get_folder_info,
@@ -88,7 +89,7 @@ def _create_regulatory_docgen_agent(model: str) -> LlmAgent:
 **Routing:**
 - Regulatory text comparison (QMSR vs QSR vs ISO 13485) → Regulatory Intelligence Agent → then generate QMSR Gap Risk Analysis report
 - Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent → then generate QMS Document Control Report
-- Remediation plan → NEVER ask the user ANY questions. Use ALL files in folder `371602616529`. Call `get_folder_info` on that folder, then call `ask_box_ai_multi` with ALL file IDs asking: "Summarize all gap findings, CAPA issues, document control findings, remediation tasks, milestones, and risk assessments from these reports." Use that full summary to populate every field in the Remediation Plan template. Do NOT ask which reports to use — use ALL of them. Do NOT ask what to map — fill every field from the summary.
+- Remediation plan → just call `generate_remediation_plan`. It handles everything automatically (reads all files in Generated Reports folder, analyzes them, populates template, generates PDF). No parameters needed.
 
 **Document Generation (DocGen):**
 After analysis, IMMEDIATELY generate a report using `generate_document`. Pass `user_input` as a structured object (dict), NOT a JSON string. Use the analysis results to populate EVERY field.
@@ -215,56 +216,13 @@ Call `generate_document` with these parameters:
 }
 ```
 
-**Remediation Plan** (template `2168089350681`):
-- ALWAYS: (1) call `get_folder_info` on folder `371602616529`, (2) call `ask_box_ai_multi` with ALL file IDs from that folder asking to summarize all findings, (3) use the summary to populate every field below, (4) call `generate_document`. No user interaction needed.
-- `generated_file_name`: `Remediation_Plan_<N>` (incrementing number).
-- All 49 fields required:
-```json
-{
-  "plan_id": "REM-QMSR-2026-001",
-  "company_name": "MedTech Precision Devices, Inc.",
-  "prepared_by": "Name, Title",
-  "reviewed_by": "Name, Title",
-  "approved_by": "Name, Title",
-  "plan_date": "2026-03-30",
-  "target_completion_date": "2026-06-30",
-  "priority": "CRITICAL|HIGH|MEDIUM|LOW",
-  "approval_status": "APPROVED|PENDING|DRAFT",
-  "executive_summary": "Summary of remediation plan...",
-  "remediation_scope": "Scope description referencing prior analysis reports...",
-  "total_remediation_items": "47",
-  "document_updates_required": "23",
-  "process_changes_required": "12",
-  "training_requirements": "8",
-  "system_changes_required": "4",
-  "document_remediation_summary": "Summary of document remediation tasks...",
-  "document_tasks": [
-    {"task_id": "DOC-REM-001", "document_id": "DOC-QMS-001", "document_title": "...", "change_description": "...", "owner": "Name", "due_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
-  ],
-  "capa_remediation_summary": "Summary of CAPA remediation tasks...",
-  "capa_tasks": [
-    {"task_id": "CAPA-REM-001", "capa_reference": "000300000007", "remediation_action": "...", "owner": "Name", "due_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
-  ],
-  "process_training_tasks": [
-    {"task_id": "PT-REM-001", "task_category": "Training|Process|System", "description": "...", "owner": "Name", "due_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
-  ],
-  "milestones": [
-    {"milestone": "M1 - Title", "description": "...", "target_date": "2026-03-15", "status": "COMPLETED|IN_PROGRESS|PLANNED"}
-  ],
-  "risk_assessment": "Risk assessment text...",
-  "prepared_date": "2026-03-30",
-  "reviewed_date": "2026-03-30",
-  "approved_date": "2026-03-30"
-}
-```
+**Remediation Plan** — just call `generate_remediation_plan()` with no arguments. It does everything automatically.
 """,
         tools=[
             find_ai_agent_by_name,
             ask_ai_agent,
-            get_folder_info,
-            get_file_content,
-            ask_box_ai_multi,
             generate_document,
+            generate_remediation_plan,
         ],
     )
 
