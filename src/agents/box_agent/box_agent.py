@@ -54,7 +54,7 @@ def create_box_agent() -> LlmAgent:
 **Key Regulatory Documents — use these file IDs directly, do NOT search for them:**
 - **QMSR Final Rule**: file ID `2168099133411` — always use this ID for QMSR references.
 - **ISO 13485:2016**: file ID `2168090125607` — always use this ID for ISO 13485 references.
-- **Old QSR (21 CFR 820)**: file ID `2180650297625`
+- **Old QSR (21 CFR 820)**: file ID `2180650297625` — always use this ID for old QSR references.
 - **QMSR Inspection Program**: file ID `2168101306838`
 
 **Instructions:**
