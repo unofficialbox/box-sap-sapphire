@@ -90,7 +90,7 @@ def _create_regulatory_docgen_agent(model: str) -> LlmAgent:
 - Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent → then generate QMS Document Control Report
 
 **Document Generation (DocGen):**
-After analysis, IMMEDIATELY generate a report using `generate_document`. Use the analysis results to populate EVERY field.
+After analysis, IMMEDIATELY generate a report using `generate_document`. Pass `user_input` as a structured object (dict), NOT a JSON string. Use the analysis results to populate EVERY field.
 
 **CRITICAL: You MUST provide a value for EVERY field. Do NOT omit any key, leave any value empty, or set any value to null. Every array MUST have at least one item with all sub-fields filled.**
 All string values must be on a single line — no literal newlines.
@@ -98,6 +98,11 @@ Keep responses SHORT — just a summary sentence and a link to the generated fil
 
 Destination folder for all reports: `371602616529` (Generated Reports).
 `generate_document` automatically waits for completion and returns the output file URL.
+Call `generate_document` with these parameters:
+- `template_id`: the template ID string
+- `user_input`: a dict with ALL template fields populated (see structures below)
+- `destination_folder_id`: `371602616529`
+- `generated_file_name`: the file name pattern specified for each template
 
 **QMSR Gap Risk Analysis** (template `2168103169843`):
 - `generated_file_name`: `QMSR_Gap_Risk_Analysis_<N>` (incrementing number, no .docx/.pdf/Template).

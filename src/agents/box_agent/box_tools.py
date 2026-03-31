@@ -588,7 +588,7 @@ def _poll_batch_completion(client, batch_id: str) -> list[dict]:
 
 def generate_document(
     template_id: str,
-    user_input: str,
+    user_input: dict[str, Any],
     destination_folder_id: Optional[str] = None,
     generated_file_name: Optional[str] = None,
     output_type: str = "pdf",
@@ -601,7 +601,8 @@ def generate_document(
 
     Args:
         template_id: The Box file ID of the DocGen template.
-        user_input: JSON string of key-value pairs to merge into the template fields.
+        user_input: Dictionary of key-value pairs to merge into the template fields.
+            Must contain ALL template tag keys with populated values.
         destination_folder_id: The Box folder ID where the generated document will be saved.
             Defaults to the Generated Reports folder (371602616529).
         generated_file_name: Optional name for the output file (without extension).
@@ -618,8 +619,26 @@ def generate_document(
             "generate_document: template=%s folder=%s output=%s",
             template_id, destination_folder_id, output_type,
         )
-        client = _get_client()
-        input_data = _parse_user_input_json(user_input)
+
+        # Accept both dict and JSON string
+        if isinstance(user_input, str):
+            input_data = _parse_user_input_json(user_input)
+        else:
+            input_data = user_input
+
+        # Log for debugging
+        ui_type = type(user_input).__name__
+        ui_preview = str(user_input)[:500] if user_input else "<EMPTY>"
+        logger.info("generate_document: user_input type=%s preview=%s", ui_type, ui_preview)
+
+        if not input_data or (isinstance(input_data, dict) and len(input_data) == 0):
+            return {"status": "error", "error_message": "user_input is empty — no data to populate the template"}
+
+        logger.info(
+            "generate_document: parsed %d top-level keys: %s",
+            len(input_data) if isinstance(input_data, dict) else 0,
+            list(input_data.keys()) if isinstance(input_data, dict) else "not a dict",
+        )
 
         result = box_docgen_create_single_file_from_user_input(
             client,
