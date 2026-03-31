@@ -1,7 +1,7 @@
 """Box Agent definition.
 
-Creates a lightweight router agent with three specialized sub-agents
-for document ops, regulatory analysis, and document generation.
+Creates a lightweight router agent with two specialized sub-agents:
+one for document ops and one for regulatory analysis + report generation.
 """
 
 import os
@@ -63,17 +63,18 @@ def _create_document_agent(model: str) -> LlmAgent:
     )
 
 
-def _create_regulatory_agent(model: str) -> LlmAgent:
-    """Sub-agent for regulatory intelligence and controlled document compliance queries."""
+def _create_regulatory_docgen_agent(model: str) -> LlmAgent:
+    """Sub-agent for regulatory analysis AND report generation (merged to preserve context)."""
     return LlmAgent(
         model=LiteLlm(model=model),
-        name="box_regulatory_agent",
+        name="box_regulatory_docgen_agent",
         description=(
-            "Performs regulatory intelligence analysis and controlled document "
-            "compliance queries using custom Box AI agents. Use for QMSR gap analysis, "
-            "regulatory comparisons, SOP impact assessment, and exemption removal analysis."
+            "Performs regulatory intelligence analysis, controlled document compliance "
+            "queries, and generates reports from DocGen templates. Use for QMSR gap "
+            "analysis, regulatory comparisons, SOP impact, exemption removal analysis, "
+            "and generating Gap Risk Analysis, CAPA, Document Control, and Remediation Plan reports."
         ),
-        instruction="""You perform regulatory analysis using custom Box AI agents.
+        instruction="""You perform regulatory analysis AND generate reports from the findings.
 
 **Key Regulatory Documents — use these file IDs directly, do NOT search:**
 - **QMSR Final Rule**: `2168099133411`
@@ -92,42 +93,17 @@ def _create_regulatory_agent(model: str) -> LlmAgent:
 - Use for SOPs, work instructions, document revisions, exemption impacts, compliance status.
 
 **Routing:**
-- Regulatory text comparison (QMSR vs QSR vs ISO 13485) → Regulatory Intelligence Agent
-- Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent
+- Regulatory text comparison (QMSR vs QSR vs ISO 13485) → Regulatory Intelligence Agent → then generate QMSR Gap Risk Analysis report
+- Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent → then generate QMS Document Control Report
 
-After completing analysis, transfer to box_docgen_agent to generate the report.
-Keep responses SHORT. Use clickable Box links.""",
-        tools=[
-            find_ai_agent_by_name,
-            ask_ai_agent,
-        ],
-    )
-
-
-def _create_docgen_agent(model: str) -> LlmAgent:
-    """Sub-agent for generating documents from Box DocGen templates."""
-    return LlmAgent(
-        model=LiteLlm(model=model),
-        name="box_docgen_agent",
-        description=(
-            "Generates documents from Box DocGen templates by merging data into "
-            "tagged placeholders. Use for generating Gap Risk Analysis, CAPA "
-            "Completeness, Document Control, and Remediation Plan reports."
-        ),
-        instruction="""You generate documents from Box DocGen templates.
+**Document Generation (DocGen):**
+After analysis, IMMEDIATELY generate a report using `generate_document`. Use the analysis results to populate EVERY field.
 
 **CRITICAL: You MUST provide a value for EVERY field. Do NOT omit any key, leave any value empty, or set any value to null. Every array MUST have at least one item with all sub-fields filled.**
 All string values must be on a single line — no literal newlines.
 Keep responses SHORT — just a summary sentence and a link to the generated file. NEVER include job IDs or batch IDs.
 
-**Available Templates:**
-- QMSR Gap Risk Analysis — template ID `2168103169843`
-- QMS Document Control Report — template ID `2168102733402`
-- CAPA Completeness Report — template ID `2168100906700`
-- Remediation Plan — template ID `2168089350681`
-
 Destination folder for all reports: `371602616529` (Generated Reports).
-Use `generate_document` with template_id, destination_folder_id, user_input JSON, and generated_file_name.
 After generating, check status with `get_docgen_job_status` or `list_docgen_batch_jobs`.
 
 **QMSR Gap Risk Analysis** (template `2168103169843`):
@@ -248,6 +224,8 @@ After generating, check status with `get_docgen_job_status` or `list_docgen_batc
 ```
 """,
         tools=[
+            find_ai_agent_by_name,
+            ask_ai_agent,
             generate_document,
             generate_document_batch,
             get_docgen_job_status,
@@ -273,20 +251,12 @@ def create_box_agent() -> LlmAgent:
         instruction="""You route requests to specialized sub-agents. Do NOT answer directly — always delegate.
 
 - **box_document_agent** — file search, read, folder ops, Box AI Q&A
-- **box_regulatory_agent** — regulatory comparison, gap analysis, SOP impact, exemption removal analysis
-- **box_docgen_agent** — generate reports from DocGen templates (Gap Risk Analysis, CAPA, Document Control, Remediation Plan)
-
-**Multi-step workflows:**
-- Regulatory gap analysis: delegate to box_regulatory_agent for analysis, then box_docgen_agent to generate the QMSR Gap Risk Analysis report.
-- Controlled document / SOP impact: delegate to box_regulatory_agent, then box_docgen_agent for the QMS Document Control Report.
-- CAPA report: delegate to box_docgen_agent with the provided SAP data.
-- Remediation plan: delegate to box_docgen_agent with prior analysis findings.
+- **box_regulatory_docgen_agent** — regulatory analysis, gap analysis, SOP impact, exemption removal, AND report generation from DocGen templates
 
 Keep responses SHORT. Use clickable Box links. NEVER include job IDs or batch IDs.""",
         tools=[],
         sub_agents=[
             _create_document_agent(model),
-            _create_regulatory_agent(model),
-            _create_docgen_agent(model),
+            _create_regulatory_docgen_agent(model),
         ],
     )
