@@ -45,6 +45,40 @@ logger.setLevel(logging.INFO)
 BOX_ROOT_FOLDER_ID = os.getenv("BOX_ROOT_FOLDER_ID", "0")
 
 
+def _strip_markdown(text: str) -> str:
+    """Remove Markdown formatting from text for use in DocGen templates."""
+    import re
+    if not text:
+        return text
+    # Remove headers (## Header → Header)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # Remove bold (**text** or __text__ → text)
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    # Remove italic (*text* or _text_ → text)
+    text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'\1', text)
+    text = re.sub(r'(?<!_)_(?!_)(.+?)(?<!_)_(?!_)', r'\1', text)
+    # Remove markdown tables — convert to plain text lines
+    # Table separator rows (|---|---|)
+    text = re.sub(r'^\|[-:|\s]+\|$', '', text, flags=re.MULTILINE)
+    # Table rows (| cell | cell |) → cell, cell
+    text = re.sub(
+        r'^\|(.+)\|$',
+        lambda m: ', '.join(c.strip() for c in m.group(1).split('|') if c.strip()),
+        text,
+        flags=re.MULTILINE,
+    )
+    # Remove bullet markers (- item or * item → item)
+    text = re.sub(r'^[\s]*[-*]\s+', '', text, flags=re.MULTILINE)
+    # Remove inline code (`code` → code)
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    # Remove links [text](url) → text
+    text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', text)
+    # Collapse multiple blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
 def _get_client():
     """Initialize and return a Box SDK Gen client using CCG authentication.
 
@@ -990,7 +1024,7 @@ def run_gap_analysis(
         ai_result = box_ai_ask_file_multi(
             client, file_ids=file_ids, prompt=_GAP_ANALYSIS_PROMPT, ai_agent_id=agent_id,
         )
-        ai_answer = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
+        ai_answer = _strip_markdown(ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", ""))
         if not ai_answer:
             return {"status": "error", "error_message": "Regulatory Intelligence Agent returned no analysis"}
 
@@ -1093,7 +1127,7 @@ def run_sop_impact_analysis(
         ai_result = box_ai_ask_file_multi(
             client, file_ids=file_ids, prompt=_SOP_IMPACT_PROMPT,
         )
-        ai_answer = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
+        ai_answer = _strip_markdown(ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", ""))
         if not ai_answer:
             return {"status": "error", "error_message": "Controlled Document AI Agent returned no analysis"}
 
@@ -1274,7 +1308,7 @@ def generate_remediation_plan(
         # Step 2: Use Box AI to analyze all files
         logger.info("generate_remediation_plan: analyzing %d files with Box AI", len(file_ids))
         ai_result = box_ai_ask_file_multi(client, file_ids=file_ids, prompt=_REMEDIATION_PROMPT)
-        ai_answer = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
+        ai_answer = _strip_markdown(ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", ""))
         if not ai_answer:
             return {"status": "error", "error_message": "Box AI returned no analysis results"}
 
