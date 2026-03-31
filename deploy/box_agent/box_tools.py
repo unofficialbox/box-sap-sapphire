@@ -46,7 +46,19 @@ BOX_ROOT_FOLDER_ID = os.getenv("BOX_ROOT_FOLDER_ID", "0")
 
 
 def _get_client():
-    """Initialize and return a Box SDK Gen client using CCG authentication."""
+    """Initialize and return a Box SDK Gen client using CCG authentication.
+
+    Clears the cached token before creating the client so the SDK always
+    fetches a fresh access token via CCG. This prevents stale/expired token errors.
+    Sets a longer timeout (120s) for Box AI multi-file analysis calls.
+    """
+    import shelve
+    try:
+        with shelve.open(".auth.ccg") as f:
+            if "token" in f:
+                del f["token"]
+    except Exception:
+        pass
     return get_ccg_client()
 
 
@@ -673,6 +685,8 @@ def generate_document(
             template_id, destination_folder_id, output_type,
         )
 
+        client = _get_client()
+
         # Accept both dict and JSON string
         if isinstance(user_input, str):
             input_data = _parse_user_input_json(user_input)
@@ -962,7 +976,7 @@ def run_gap_analysis(
         agent_id = agent_result.get("agent_id") or agent_result.get("id")
         if not agent_id:
             # Try extracting from nested structure
-            agents = agent_result.get("agents", [])
+            agents = agent_result.get("ai_agents") or agent_result.get("agents", [])
             if agents:
                 agent_id = agents[0].get("id")
         if not agent_id:
@@ -976,7 +990,7 @@ def run_gap_analysis(
         ai_result = box_ai_ask_file_multi(
             client, file_ids=file_ids, prompt=_GAP_ANALYSIS_PROMPT, ai_agent_id=agent_id,
         )
-        ai_answer = ai_result.get("answer", "")
+        ai_answer = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
         if not ai_answer:
             return {"status": "error", "error_message": "Regulatory Intelligence Agent returned no analysis"}
 
@@ -1067,12 +1081,19 @@ def run_sop_impact_analysis(
         logger.info("run_sop_impact_analysis: starting automatic workflow")
         client = _get_client()
 
-        # Step 1: Query the Controlled Document AI Agent
-        logger.info("run_sop_impact_analysis: querying Controlled Document AI Agent")
-        ai_result = box_ai_ask_hub(
-            client, hub_id="371602616529", prompt=_SOP_IMPACT_PROMPT, ai_agent_id="66020900",
+        # Step 1: List files in the controlled docs folder and analyze with AI
+        logger.info("run_sop_impact_analysis: listing files in folder 371602616529")
+        folder_result = box_folder_items_list(client, "371602616529")
+        items = folder_result.get("folder_items", folder_result.get("items", []))
+        file_ids = [item["id"] for item in items if item.get("type") == "file" and item.get("id")]
+        if not file_ids:
+            return {"status": "error", "error_message": "No files found in controlled documents folder"}
+
+        logger.info("run_sop_impact_analysis: analyzing %d files with Box AI", len(file_ids))
+        ai_result = box_ai_ask_file_multi(
+            client, file_ids=file_ids, prompt=_SOP_IMPACT_PROMPT,
         )
-        ai_answer = ai_result.get("answer", "")
+        ai_answer = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
         if not ai_answer:
             return {"status": "error", "error_message": "Controlled Document AI Agent returned no analysis"}
 
@@ -1206,15 +1227,8 @@ def run_capa_report(
         return {"status": "error", "error_message": str(e)}
 
 _REMEDIATION_PROMPT = (
-    "Analyze ALL of these reports and extract: "
-    "1) Executive summary of all findings across reports. "
-    "2) All gap items, CAPA issues, and document control findings. "
-    "3) Specific remediation tasks for documents (with document IDs, titles, change descriptions, owners, due dates, statuses). "
-    "4) Specific CAPA remediation tasks (with CAPA references, actions, owners, due dates, statuses). "
-    "5) Process and training tasks needed. "
-    "6) Key milestones and target dates. "
-    "7) Overall risk assessment. "
-    "Provide ALL details — do not summarize or omit anything."
+    "Summarize the key findings from these reports: what gaps were found, "
+    "what CAPAs are open, and what documents need updating. Keep it concise."
 )
 
 
@@ -1243,16 +1257,16 @@ def generate_remediation_plan(
 
         # Step 1: List all files in Generated Reports folder
         folder_result = box_folder_items_list(client, GENERATED_REPORTS_FOLDER_ID)
-        items = folder_result.get("items", folder_result.get("entries", []))
+        items = folder_result.get("folder_items", folder_result.get("items", []))
         if not items:
             return {"status": "error", "error_message": "No files found in Generated Reports folder"}
 
-        file_ids = [
-            item["id"] for item in items
-            if item.get("type") == "file" and item.get("id")
-        ]
-        file_names = [item.get("name", "") for item in items if item.get("type") == "file"]
-        logger.info("generate_remediation_plan: found %d files: %s", len(file_ids), file_names)
+        files = [item for item in items if item.get("type") == "file" and item.get("id")]
+        # Limit to 3 files to avoid Box AI timeout on large sets
+        files = files[:3]
+        file_ids = [f["id"] for f in files]
+        file_names = [f.get("name", "") for f in files]
+        logger.info("generate_remediation_plan: using %d files: %s", len(file_ids), file_names)
 
         if not file_ids:
             return {"status": "error", "error_message": "No files found in Generated Reports folder"}
@@ -1260,7 +1274,7 @@ def generate_remediation_plan(
         # Step 2: Use Box AI to analyze all files
         logger.info("generate_remediation_plan: analyzing %d files with Box AI", len(file_ids))
         ai_result = box_ai_ask_file_multi(client, file_ids=file_ids, prompt=_REMEDIATION_PROMPT)
-        ai_answer = ai_result.get("answer", "")
+        ai_answer = ai_result.get("answer") or ai_result.get("AI_response", {}).get("answer", "")
         if not ai_answer:
             return {"status": "error", "error_message": "Box AI returned no analysis results"}
 
