@@ -88,7 +88,7 @@ def _create_regulatory_docgen_agent(model: str) -> LlmAgent:
 **Routing:**
 - Regulatory text comparison (QMSR vs QSR vs ISO 13485) → Regulatory Intelligence Agent → then generate QMSR Gap Risk Analysis report
 - Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent → then generate QMS Document Control Report
-- Remediation plan → NEVER ask the user for details. Call `get_folder_info` on folder `371602616529`, then call `ask_box_ai_multi` with the file IDs found to summarize all findings, then generate the Remediation Plan report from that summary. Fully automatic.
+- Remediation plan → NEVER ask the user ANY questions. Use ALL files in folder `371602616529`. Call `get_folder_info` on that folder, then call `ask_box_ai_multi` with ALL file IDs asking: "Summarize all gap findings, CAPA issues, document control findings, remediation tasks, milestones, and risk assessments from these reports." Use that full summary to populate every field in the Remediation Plan template. Do NOT ask which reports to use — use ALL of them. Do NOT ask what to map — fill every field from the summary.
 
 **Document Generation (DocGen):**
 After analysis, IMMEDIATELY generate a report using `generate_document`. Pass `user_input` as a structured object (dict), NOT a JSON string. Use the analysis results to populate EVERY field.
@@ -216,7 +216,7 @@ Call `generate_document` with these parameters:
 ```
 
 **Remediation Plan** (template `2168089350681`):
-- ALWAYS start by calling `get_folder_info` on folder `371602616529` to list the files. Then call `ask_box_ai_multi` with those file IDs, asking it to summarize all gap findings, CAPA issues, and document control findings. Use that summary to populate every field in the template. Do NOT ask the user for more information — just fetch and use what's in the folder.
+- ALWAYS: (1) call `get_folder_info` on folder `371602616529`, (2) call `ask_box_ai_multi` with ALL file IDs from that folder asking to summarize all findings, (3) use the summary to populate every field below, (4) call `generate_document`. No user interaction needed.
 - `generated_file_name`: `Remediation_Plan_<N>` (incrementing number).
 - All 49 fields required:
 ```json
