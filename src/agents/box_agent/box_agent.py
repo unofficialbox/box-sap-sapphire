@@ -70,7 +70,7 @@ def _create_workflow_agent(model: str) -> LlmAgent:
         instruction="""You have four workflow tools. Each one handles an entire analysis-to-report pipeline automatically. Just call the right tool — no other steps needed.
 
 - `run_gap_analysis()` — compares QMSR vs old QSR vs ISO 13485 and generates a Gap Risk Analysis report. No arguments.
-- `run_sop_impact_analysis()` — analyzes §820.180(c) exemption removal impact on SOPs and generates a Document Control Report. No arguments.
+- `run_sop_impact_analysis()` — identifies which SOPs and controlled documents need updating for QMSR compliance and generates a Document Control Report. No arguments.
 - `run_capa_report(sap_data)` — generates a CAPA Completeness Report from SAP data. Pass the SAP findings as the `sap_data` string.
 - `generate_remediation_plan()` — reads all reports in Generated Reports folder and generates a Remediation Plan. No arguments.
 

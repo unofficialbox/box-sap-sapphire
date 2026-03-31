@@ -923,8 +923,9 @@ _GAP_ANALYSIS_PROMPT = (
 )
 
 _SOP_IMPACT_PROMPT = (
-    "What changed with the §820.180(c) exemption removal under the QMSR? "
-    "Which SOPs and controlled documents are affected? "
+    "What SOPs and controlled documents need to be updated for QMSR compliance? "
+    "Consider the §820.180(c) exemption removal, ISO 13485:2016 clause mapping, "
+    "and any other regulatory changes under the new QMSR. "
     "For each affected document, provide: document ID, title, document type, ISO reference, "
     "revision number, status, and effective date. "
     "List documents requiring revision with change reasons, CAPA references, and target dates. "
@@ -1048,10 +1049,10 @@ def run_gap_analysis(
 def run_sop_impact_analysis(
     tool_context: Optional[ToolContext] = None,
 ) -> dict[str, Any]:
-    """Analyze §820.180(c) exemption removal impact on SOPs and generate report.
+    """Identify which SOPs and controlled documents need updating and generate report.
 
     Automatically:
-    1. Queries the Controlled Document AI Agent about exemption impacts
+    1. Queries the Controlled Document AI Agent about QMSR compliance impacts
     2. Populates the QMS Document Control Report template
     3. Generates the PDF and returns the file URL
 
