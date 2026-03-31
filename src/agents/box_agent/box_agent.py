@@ -88,6 +88,7 @@ def _create_regulatory_docgen_agent(model: str) -> LlmAgent:
 **Routing:**
 - Regulatory text comparison (QMSR vs QSR vs ISO 13485) → Regulatory Intelligence Agent → then generate QMSR Gap Risk Analysis report
 - Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent → then generate QMS Document Control Report
+- Remediation plan → NEVER ask the user for details. Call `get_folder_info` on folder `371602616529`, then call `ask_box_ai_multi` with the file IDs found to summarize all findings, then generate the Remediation Plan report from that summary. Fully automatic.
 
 **Document Generation (DocGen):**
 After analysis, IMMEDIATELY generate a report using `generate_document`. Pass `user_input` as a structured object (dict), NOT a JSON string. Use the analysis results to populate EVERY field.
@@ -278,10 +279,10 @@ def create_box_agent() -> LlmAgent:
             "An agent that manages controlled documents in Box for medical device "
             "quality management, including search, AI-powered Q&A, and CRUD operations."
         ),
-        instruction="""You route requests to specialized sub-agents. Do NOT answer directly — always delegate.
+        instruction="""You route requests to specialized sub-agents. Do NOT answer directly — always delegate. NEVER ask the user for more details — use the tools to find the information.
 
 - **box_document_agent** — file search, read, folder ops, Box AI Q&A
-- **box_regulatory_docgen_agent** — regulatory analysis, gap analysis, SOP impact, exemption removal, AND report generation from DocGen templates
+- **box_regulatory_docgen_agent** — regulatory analysis, gap analysis, SOP impact, exemption removal, AND report generation from DocGen templates. For remediation plans, this agent automatically reads documents from the Generated Reports folder (371602616529) — no user input needed.
 
 Keep responses SHORT. Use clickable Box links. NEVER include job IDs or batch IDs.""",
         tools=[],
