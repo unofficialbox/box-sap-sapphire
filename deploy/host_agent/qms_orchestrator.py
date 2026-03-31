@@ -1,22 +1,26 @@
-"""QMS Orchestrator agent definition for ADK deployment.
+"""QMS Orchestrator agent definition.
 
-Defines root_agent for use with `adk deploy cloud_run --a2a`.
+Creates the root orchestrator agent that delegates requests to
+SAP and Box sub-agents via tool-based A2A calls.
 """
 
 import os
 
-from google.adk.agents import LlmAgent
+from a2a.types import AgentCapabilities, AgentCard, AgentSkill
+from google.adk.agents.llm_agent import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 
 from .qms_orchestrator_tools import query_box, query_sap
 
-model = os.getenv("LITELLM_MODEL", "vertex_ai/gemini-2.5-flash")
 
-root_agent = LlmAgent(
-    model=LiteLlm(model=model),
-    name="qms_orchestrator",
-    description="Orchestrates quality management workflows across SAP and Box systems",
-    instruction="""You are a quality management orchestration agent for MedTech Precision Devices, Inc.
+def create_root_agent() -> LlmAgent:
+    """Constructs the QMS orchestrator agent with SAP and Box tools."""
+    model = os.getenv("LITELLM_MODEL", "vertex_ai/gemini-2.5-flash")
+    return LlmAgent(
+        model=LiteLlm(model=model),
+        name="qms_orchestrator",
+        description="Orchestrates quality management workflows across SAP and Box systems",
+        instruction="""You are a quality management orchestration agent for MedTech Precision Devices, Inc.
 
 You have two tools:
 - **query_sap**: Queries SAP Quality Management data (CAPAs, quality notifications, quality info records, controlled document metadata, CAPA actions).
@@ -44,9 +48,6 @@ Routing guide — follow these rules strictly, do not overthink:
 - CAPAs, quality notifications, corrective/preventive actions → query_sap ONLY
 - Box files (search, read, AI Q&A, upload, DocGen) → query_box
 - If a workflow requires BOTH (e.g., CAPA review that also generates a report), call query_sap first, then query_box
-
-**Regulatory Comparison & Report Generation Workflow:**
-The typical first step for QMSR compliance is comparing the new QMSR final rule against the old QSR regulation, then generating a formal gap analysis report. When asked to perform a regulatory comparison or gap analysis, execute these steps SEQUENTIALLY — wait for each to complete before moving to the next:
 
 **Report Generation Rule:**
 After ANY substantive analysis (regulatory comparison, gap analysis, exemption impact, CAPA review, compliance assessment, or document audit), ALWAYS generate a formal report as the final step. Choose the appropriate DocGen template:
@@ -83,5 +84,38 @@ When asked to create a remediation plan, plan remediation actions, or propose co
 NEVER expose internal tool names, file IDs, agent IDs, or function call details in your response — only user-friendly descriptions and clickable Box links.
 
 Context: The FDA QMSR (effective Feb 2, 2026) incorporates ISO 13485:2016 into 21 CFR Part 820. The company uses SAP QM for CAPA tracking and Box for controlled document storage.""",
-    tools=[query_sap, query_box],
-)
+        tools=[query_sap, query_box],
+        sub_agents=[],
+    )
+
+
+def create_agent_card(agent, agent_url: str) -> AgentCard:
+    """Create the A2A agent card for the QMS orchestrator."""
+    return AgentCard(
+        name="Quality Management Orchestrator",
+        description=agent.description,
+        url=agent_url,
+        version="1.0.0",
+        defaultInputModes=["text/plain"],
+        defaultOutputModes=["text/plain"],
+        capabilities=AgentCapabilities(streaming=True),
+        skills=[
+            AgentSkill(
+                id="quality_management",
+                name="Quality Management Orchestrator",
+                description=(
+                    "Routes quality management queries to SAP and Box agents for "
+                    "CAPA tracking, document management, and QMSR compliance"
+                ),
+                tags=["quality", "capa", "qmsr", "iso13485", "fda", "documents", "sap", "box"],
+                examples=[
+                    "Compare the new QMSR final rule against the old 21 CFR 820 QSR and generate a gap analysis report",
+                    "What changed with the §820.180(c) exemption removal and which of our SOPs are affected?",
+                    "Show me all open CAPAs related to the QMSR transition and their current status",
+                    "Which controlled documents were revised in January 2026 for QMSR compliance?",
+                    "What does our management review SOP say about FDA inspection readiness under the new QMSR?",
+                    "Are there any supplier quality notifications tied to CAPA 000300000005?",
+                ],
+            )
+        ],
+    )
