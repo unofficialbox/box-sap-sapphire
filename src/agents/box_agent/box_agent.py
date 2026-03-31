@@ -104,7 +104,7 @@ All string values must be on a single line — no literal newlines.
 Keep responses SHORT — just a summary sentence and a link to the generated file. NEVER include job IDs or batch IDs.
 
 Destination folder for all reports: `371602616529` (Generated Reports).
-After generating, check status with `get_docgen_job_status` or `list_docgen_batch_jobs`.
+`generate_document` automatically waits for completion and returns the output file URL — do NOT call `get_docgen_job_status` or `list_docgen_batch_jobs` separately.
 
 **QMSR Gap Risk Analysis** (template `2168103169843`):
 - `generated_file_name`: `QMSR_Gap_Risk_Analysis_<N>` (incrementing number, no .docx/.pdf/Template).

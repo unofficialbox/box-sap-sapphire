@@ -522,6 +522,69 @@ def get_docgen_template_tags(
 
 GENERATED_REPORTS_FOLDER_ID = os.getenv("BOX_GENERATED_REPORTS_FOLDER_ID", "371602616529")
 
+_DOCGEN_POLL_INTERVAL = 3   # seconds between status checks
+_DOCGEN_MAX_WAIT = 120      # max seconds to wait for completion
+
+
+def _parse_user_input_json(user_input):
+    """Parse a JSON string from LLM output, handling common issues."""
+    import json as _json
+
+    if not isinstance(user_input, str):
+        return user_input
+
+    import re
+    sanitized = re.sub(
+        r'(?<=": ")((?:[^"\\]|\\.)*)(?=")',
+        lambda m: m.group(0).replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t"),
+        user_input,
+    )
+    try:
+        return _json.loads(sanitized)
+    except _json.JSONDecodeError:
+        cleaned = user_input.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+        return _json.loads(cleaned)
+
+
+def _extract_batch_id(result: dict) -> str | None:
+    """Extract batch ID from the toolkit's create response."""
+    msg = result.get("message", "")
+    if "id " in msg:
+        return msg.split("id ")[-1].strip()
+    return None
+
+
+def _poll_batch_completion(client, batch_id: str) -> list[dict]:
+    """Poll a DocGen batch until all jobs complete or timeout."""
+    import time
+
+    terminal_states = {"completed", "failed", "completed_with_error"}
+    elapsed = 0
+
+    while elapsed < _DOCGEN_MAX_WAIT:
+        time.sleep(_DOCGEN_POLL_INTERVAL)
+        elapsed += _DOCGEN_POLL_INTERVAL
+
+        jobs = box_docgen_list_jobs_by_batch(client, batch_id)
+        if not jobs or "error" in jobs[0]:
+            logger.warning("_poll_batch_completion: error polling batch %s", batch_id)
+            continue
+
+        all_done = all(j.get("status") in terminal_states for j in jobs)
+        if all_done:
+            logger.info("_poll_batch_completion: batch %s finished in %ds", batch_id, elapsed)
+            for job in jobs:
+                _enrich_docgen_job(job)
+            return jobs
+
+        logger.debug("_poll_batch_completion: batch %s still processing (%ds)", batch_id, elapsed)
+
+    logger.warning("_poll_batch_completion: batch %s timed out after %ds", batch_id, _DOCGEN_MAX_WAIT)
+    jobs = box_docgen_list_jobs_by_batch(client, batch_id)
+    for job in jobs:
+        _enrich_docgen_job(job)
+    return jobs
+
 
 def generate_document(
     template_id: str,
@@ -531,10 +594,10 @@ def generate_document(
     output_type: str = "pdf",
     tool_context: Optional[ToolContext] = None,
 ) -> dict[str, Any]:
-    """Generate a single document from a Box DocGen template.
+    """Generate a document from a Box DocGen template and wait for completion.
 
-    Merges the provided data into a DocGen template and produces an output document
-    (PDF or DOCX) in the specified destination folder.
+    Merges the provided data into a DocGen template, polls until the job
+    finishes, and returns the output file URL directly.
 
     Args:
         template_id: The Box file ID of the DocGen template.
@@ -545,10 +608,8 @@ def generate_document(
         output_type: Output format — 'pdf' or 'docx' (defaults to 'pdf').
 
     Returns:
-        dict with status and the generated document batch/job details.
+        dict with status, output file URL, and job details.
     """
-    import json as _json
-
     try:
         if not destination_folder_id:
             destination_folder_id = GENERATED_REPORTS_FOLDER_ID
@@ -558,25 +619,7 @@ def generate_document(
             template_id, destination_folder_id, output_type,
         )
         client = _get_client()
-
-        # Parse user_input from JSON string to dict
-        if isinstance(user_input, str):
-            # Sanitize: LLMs often produce literal newlines/tabs inside JSON
-            # string values which are invalid control characters in JSON.
-            import re
-            sanitized = re.sub(
-                r'(?<=": ")((?:[^"\\]|\\.)*)(?=")',
-                lambda m: m.group(0).replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t"),
-                user_input,
-            )
-            try:
-                input_data = _json.loads(sanitized)
-            except _json.JSONDecodeError:
-                # Fallback: aggressively replace all unescaped control chars
-                cleaned = user_input.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
-                input_data = _json.loads(cleaned)
-        else:
-            input_data = user_input
+        input_data = _parse_user_input_json(user_input)
 
         result = box_docgen_create_single_file_from_user_input(
             client,
@@ -587,16 +630,27 @@ def generate_document(
             output_type=output_type,
         )
 
-        logger.info("generate_document: batch created for template %s", template_id)
+        if "error" in result:
+            return {"status": "error", "error_message": result["error"]}
+
+        batch_id = _extract_batch_id(result)
+        if not batch_id:
+            return {"status": "error", "error_message": "Could not extract batch ID from response"}
+
+        logger.info("generate_document: polling batch %s for completion", batch_id)
+        jobs = _poll_batch_completion(client, batch_id)
+
+        # Extract the output file info from the first (only) job
+        job = jobs[0] if jobs else {}
+        output_url = job.get("output_file_url")
+
         return {
             "status": "success",
+            "output_file_url": output_url,
             "destination_folder_url": _box_folder_url(destination_folder_id),
-            **result,
+            "job_status": job.get("status", "unknown"),
         }
 
-    except _json.JSONDecodeError as e:
-        logger.error("generate_document: invalid JSON in user_input: %s", e)
-        return {"status": "error", "error_message": f"Invalid JSON in user_input: {e}"}
     except Exception as e:
         logger.error("generate_document failed: %s", e)
         return {"status": "error", "error_message": str(e), "template_id": template_id}
@@ -609,9 +663,10 @@ def generate_document_batch(
     output_type: str = "pdf",
     tool_context: Optional[ToolContext] = None,
 ) -> dict[str, Any]:
-    """Generate multiple documents from a Box DocGen template in a single batch.
+    """Generate multiple documents from a Box DocGen template and wait for completion.
 
     Each entry in document_generation_data produces a separate output document.
+    Polls until all jobs finish and returns output file URLs.
 
     Args:
         template_id: The Box file ID of the DocGen template.
@@ -622,7 +677,7 @@ def generate_document_batch(
         output_type: Output format — 'pdf' or 'docx' (defaults to 'pdf').
 
     Returns:
-        dict with status and the batch ID for tracking.
+        dict with status and list of output file URLs.
     """
     import json as _json
 
@@ -636,7 +691,6 @@ def generate_document_batch(
         )
         client = _get_client()
 
-        # Parse document_generation_data from JSON string to list
         if isinstance(document_generation_data, str):
             try:
                 gen_data = _json.loads(document_generation_data)
@@ -654,12 +708,28 @@ def generate_document_batch(
             output_type=output_type,
         )
 
-        logger.info("generate_document_batch: batch created for template %s", template_id)
-        return {"status": "success", **result}
+        if "error" in result:
+            return {"status": "error", "error_message": result["error"]}
 
-    except _json.JSONDecodeError as e:
-        logger.error("generate_document_batch: invalid JSON: %s", e)
-        return {"status": "error", "error_message": f"Invalid JSON in document_generation_data: {e}"}
+        batch_id = _extract_batch_id(result)
+        if not batch_id:
+            return {"status": "error", "error_message": "Could not extract batch ID from response"}
+
+        logger.info("generate_document_batch: polling batch %s for completion", batch_id)
+        jobs = _poll_batch_completion(client, batch_id)
+
+        output_files = [
+            {"file_url": j.get("output_file_url"), "status": j.get("status", "unknown")}
+            for j in jobs
+        ]
+
+        return {
+            "status": "success",
+            "count": len(output_files),
+            "output_files": output_files,
+            "destination_folder_url": _box_folder_url(destination_folder_id),
+        }
+
     except Exception as e:
         logger.error("generate_document_batch failed: %s", e)
         return {"status": "error", "error_message": str(e), "template_id": template_id}
