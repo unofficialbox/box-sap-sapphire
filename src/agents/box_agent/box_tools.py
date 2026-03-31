@@ -525,6 +525,59 @@ GENERATED_REPORTS_FOLDER_ID = os.getenv("BOX_GENERATED_REPORTS_FOLDER_ID", "3716
 _DOCGEN_POLL_INTERVAL = 3   # seconds between status checks
 _DOCGEN_MAX_WAIT = 120      # max seconds to wait for completion
 
+# Required fields per template — generate_document will reject calls missing any of these.
+_TEMPLATE_REQUIRED_FIELDS: dict[str, list[str]] = {
+    # QMSR Gap Risk Analysis
+    "2168103169843": [
+        "report_id", "company_name", "prepared_by", "reviewed_by", "approved_by",
+        "report_date", "qmsr_effective_date", "assessment_scope", "classification",
+        "executive_summary", "regulatory_background", "regulatory_changes",
+        "gap_analysis_summary", "gap_items", "total_gaps", "critical_gaps",
+        "high_risk_gaps", "medium_low_gaps", "exemption_removal_impact",
+        "inspectable_records", "recommendations", "prepared_date", "reviewed_date",
+        "approved_date",
+    ],
+    # QMS Document Control Report
+    "2168102733402": [
+        "report_id", "company_name", "generated_by", "report_date", "reporting_period",
+        "total_documents", "documents_requiring_update", "classification",
+        "document_control_summary", "total_controlled_documents",
+        "docs_referencing_old_qsr", "docs_requiring_iso_mapping",
+        "docs_revised_for_qmsr", "docs_pending_review", "docs_in_draft",
+        "docs_effective", "documents", "revision_requirement_summary",
+        "documents_requiring_revision", "document_type_summary", "compliance_notes",
+    ],
+    # CAPA Completeness Report
+    "2168100906700": [
+        "report_id", "company_name", "prepared_by", "report_date",
+        "assessment_period", "total_capas_assessed", "iso_reference", "classification",
+        "executive_summary", "total_capas", "open_capas", "closed_capas",
+        "capas_corrective", "capas_preventive", "capas_missing_verification",
+        "capas_past_due", "avg_closure_days", "capa_records", "capa_tasks",
+        "missing_verification_summary", "compliance_assessment", "recommendations",
+    ],
+    # Remediation Plan
+    "2168089350681": [
+        "plan_id", "company_name", "prepared_by", "reviewed_by", "approved_by",
+        "plan_date", "target_completion_date", "priority", "approval_status",
+        "executive_summary", "remediation_scope", "total_remediation_items",
+        "document_updates_required", "process_changes_required",
+        "training_requirements", "system_changes_required",
+        "document_remediation_summary", "document_tasks",
+        "capa_remediation_summary", "capa_tasks", "process_training_tasks",
+        "milestones", "risk_assessment", "prepared_date", "reviewed_date",
+        "approved_date",
+    ],
+}
+
+
+def _validate_template_fields(template_id: str, input_data: dict) -> list[str]:
+    """Return list of missing required fields for a template, or empty list if all present."""
+    required = _TEMPLATE_REQUIRED_FIELDS.get(template_id)
+    if not required:
+        return []
+    return [f for f in required if f not in input_data]
+
 
 def _parse_user_input_json(user_input):
     """Parse a JSON string from LLM output, handling common issues."""
@@ -633,6 +686,17 @@ def generate_document(
 
         if not input_data or (isinstance(input_data, dict) and len(input_data) == 0):
             return {"status": "error", "error_message": "user_input is empty — no data to populate the template"}
+
+        # Validate all required fields are present
+        if isinstance(input_data, dict):
+            missing = _validate_template_fields(template_id, input_data)
+            if missing:
+                logger.error("generate_document: missing %d required fields: %s", len(missing), missing)
+                return {
+                    "status": "error",
+                    "error_message": f"Missing {len(missing)} required fields: {', '.join(missing)}. "
+                    f"You MUST provide ALL fields. Re-call generate_document with every field populated.",
+                }
 
         logger.info(
             "generate_document: parsed %d top-level keys: %s",
