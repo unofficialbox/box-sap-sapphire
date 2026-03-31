@@ -215,7 +215,7 @@ Call `generate_document` with these parameters:
 ```
 
 **Remediation Plan** (template `2168089350681`):
-- If no prior analysis context is provided, use `ask_box_ai_multi` on the documents in folder `371602616529` (Generated Reports) to gather findings, then use those findings to populate the template.
+- ALWAYS start by calling `get_folder_info` on folder `371602616529` to list the files. Then call `ask_box_ai_multi` with those file IDs, asking it to summarize all gap findings, CAPA issues, and document control findings. Use that summary to populate every field in the template. Do NOT ask the user for more information — just fetch and use what's in the folder.
 - `generated_file_name`: `Remediation_Plan_<N>` (incrementing number).
 - All 49 fields required:
 ```json
