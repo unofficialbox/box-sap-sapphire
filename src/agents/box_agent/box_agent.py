@@ -142,6 +142,41 @@ Call `generate_document` with these parameters:
 }
 ```
 
+**QMS Document Control Report** (template `2168102733402`):
+- `generated_file_name`: `QMS_Document_Control_Report_<N>` (incrementing number).
+- All fields required:
+```json
+{
+  "report_id": "RPT-DOC-2026-001",
+  "company_name": "MedTech Precision Devices, Inc.",
+  "generated_by": "Name, Title",
+  "report_date": "2026-03-30",
+  "reporting_period": "January 2024 - March 2026",
+  "total_documents": "1840",
+  "documents_requiring_update": "23",
+  "classification": "CONTROLLED",
+  "document_control_summary": "Summary of document control findings...",
+  "total_controlled_documents": "1840",
+  "docs_referencing_old_qsr": "62",
+  "docs_requiring_iso_mapping": "23",
+  "docs_revised_for_qmsr": "20",
+  "docs_pending_review": "2",
+  "docs_in_draft": "1",
+  "docs_effective": "1837",
+  "documents": [
+    {"document_id": "DOC-QMS-001", "title": "...", "document_type": "QM|SOP|WI|MDF|VP|RPT", "iso_reference": "4.2.2", "revision_number": "08", "status": "EFFECTIVE|DRAFT|UNDER_REVIEW", "effective_date": "2026-02-01"}
+  ],
+  "revision_requirement_summary": "Summary of documents requiring revision...",
+  "documents_requiring_revision": [
+    {"document_id": "DOC-QMS-001", "title": "...", "change_reason": "...", "capa_reference": "", "target_date": "2026-01-15"}
+  ],
+  "document_type_summary": [
+    {"document_type": "Quality Manual (QM)", "count": "1", "percentage": "0.05%", "last_review_date": "2026-01-15"}
+  ],
+  "compliance_notes": "Compliance notes text..."
+}
+```
+
 **CAPA Completeness Report** (template `2168100906700`):
 - `generated_file_name`: `CAPA_Completeness_Report_<N>` (incrementing number).
 - All fields required:
