@@ -215,6 +215,7 @@ Call `generate_document` with these parameters:
 ```
 
 **Remediation Plan** (template `2168089350681`):
+- If no prior analysis context is provided, use `ask_box_ai_multi` on the documents in folder `371602616529` (Generated Reports) to gather findings, then use those findings to populate the template.
 - `generated_file_name`: `Remediation_Plan_<N>` (incrementing number).
 - All 49 fields required:
 ```json
@@ -259,6 +260,9 @@ Call `generate_document` with these parameters:
         tools=[
             find_ai_agent_by_name,
             ask_ai_agent,
+            get_folder_info,
+            get_file_content,
+            ask_box_ai_multi,
             generate_document,
         ],
     )
