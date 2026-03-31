@@ -1,7 +1,7 @@
 """Box Agent definition.
 
 Creates a lightweight router agent with two specialized sub-agents:
-one for document ops and one for regulatory analysis + report generation.
+one for document ops and one for workflow-specific report generation.
 """
 
 import os
@@ -10,17 +10,17 @@ from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 
 from .box_tools import (
-    ask_ai_agent,
     ask_box_ai,
     ask_box_ai_hub,
     ask_box_ai_multi,
     create_folder,
-    find_ai_agent_by_name,
-    generate_document,
     generate_remediation_plan,
     get_file_content,
     get_file_info,
     get_folder_info,
+    run_capa_report,
+    run_gap_analysis,
+    run_sop_impact_analysis,
     search_files,
     upload_file,
 )
@@ -57,171 +57,29 @@ def _create_document_agent(model: str) -> LlmAgent:
     )
 
 
-def _create_regulatory_docgen_agent(model: str) -> LlmAgent:
-    """Sub-agent for regulatory analysis AND report generation (merged to preserve context)."""
+def _create_workflow_agent(model: str) -> LlmAgent:
+    """Sub-agent with single-call workflow tools for report generation."""
     return LlmAgent(
         model=LiteLlm(model=model),
-        name="box_regulatory_docgen_agent",
+        name="box_workflow_agent",
         description=(
-            "Performs regulatory intelligence analysis, controlled document compliance "
-            "queries, and generates reports from DocGen templates. Use for QMSR gap "
-            "analysis, regulatory comparisons, SOP impact, exemption removal analysis, "
-            "and generating Gap Risk Analysis, CAPA, Document Control, and Remediation Plan reports."
+            "Runs complete analysis-to-report workflows with a single tool call. "
+            "Use for: QMSR gap analysis, SOP/exemption impact analysis, "
+            "CAPA completeness reports, and remediation plans."
         ),
-        instruction="""You perform regulatory analysis AND generate reports from the findings.
+        instruction="""You have four workflow tools. Each one handles an entire analysis-to-report pipeline automatically. Just call the right tool — no other steps needed.
 
-**Key Regulatory Documents — use these file IDs directly, do NOT search:**
-- **QMSR Final Rule**: `2168099133411`
-- **ISO 13485:2016**: `2168090125607`
-- **Old QSR (21 CFR 820)**: `2180650297625`
-- **QMSR Inspection Program**: `2168101306838`
+- `run_gap_analysis()` — compares QMSR vs old QSR vs ISO 13485 and generates a Gap Risk Analysis report. No arguments.
+- `run_sop_impact_analysis()` — analyzes §820.180(c) exemption removal impact on SOPs and generates a Document Control Report. No arguments.
+- `run_capa_report(sap_data)` — generates a CAPA Completeness Report from SAP data. Pass the SAP findings as the `sap_data` string.
+- `generate_remediation_plan()` — reads all reports in Generated Reports folder and generates a Remediation Plan. No arguments.
 
-**Regulatory Intelligence Agent:**
-- Call `find_ai_agent_by_name` with name "Regulatory Intelligence Agent" to get the agent_id.
-- Call `ask_ai_agent` with: `agent_id` from above, `item_type`: `files`, `item_id`: comma-separated file IDs (e.g. `2168099133411,2180650297625,2168090125607`), `prompt`: your question.
-- For QMSR gap analysis, pass ALL THREE: QMSR (`2168099133411`), old QSR (`2180650297625`), ISO 13485 (`2168090125607`).
-
-**Controlled Document AI Agent:**
-- Agent ID: `66020900`, Hub ID: `943271141` (Quality & Compliance Portal).
-- Call `ask_ai_agent` with: `agent_id`: `66020900`, `item_type`: `hub`, `item_id`: `943271141`, `prompt`: your question.
-- Use for SOPs, work instructions, document revisions, exemption impacts, compliance status.
-
-**Routing:**
-- Regulatory text comparison (QMSR vs QSR vs ISO 13485) → Regulatory Intelligence Agent → then generate QMSR Gap Risk Analysis report
-- Controlled documents, SOPs, exemption impacts → Controlled Document AI Agent → then generate QMS Document Control Report
-- Remediation plan → just call `generate_remediation_plan`. It handles everything automatically (reads all files in Generated Reports folder, analyzes them, populates template, generates PDF). No parameters needed.
-
-**Document Generation (DocGen):**
-After analysis, IMMEDIATELY generate a report using `generate_document`. Pass `user_input` as a structured object (dict), NOT a JSON string. Use the analysis results to populate EVERY field.
-
-**CRITICAL: You MUST provide a value for EVERY field. Do NOT omit any key, leave any value empty, or set any value to null. Every array MUST have at least one item with all sub-fields filled.**
-All string values must be on a single line — no literal newlines.
-Keep responses SHORT — just a summary sentence and a link to the generated file. NEVER include job IDs or batch IDs.
-
-Destination folder for all reports: `371602616529` (Generated Reports).
-`generate_document` automatically waits for completion and returns the output file URL.
-Call `generate_document` with these parameters:
-- `template_id`: the template ID string
-- `user_input`: a dict with ALL template fields populated (see structures below)
-- `destination_folder_id`: `371602616529`
-- `generated_file_name`: the file name pattern specified for each template
-
-**QMSR Gap Risk Analysis** (template `2168103169843`):
-- `generated_file_name`: `QMSR_Gap_Risk_Analysis_<N>` (incrementing number, no .docx/.pdf/Template).
-- All 38 fields required:
-```json
-{
-  "report_id": "RPT-GAP-2026-001",
-  "company_name": "MedTech Precision Devices, Inc.",
-  "prepared_by": "Name, Title",
-  "reviewed_by": "Name, Title",
-  "approved_by": "Name, Title",
-  "report_date": "2026-03-29",
-  "qmsr_effective_date": "2026-02-02",
-  "assessment_scope": "Full QMS assessment against FDA QMSR...",
-  "classification": "CONFIDENTIAL",
-  "executive_summary": "Summary text on a single line...",
-  "regulatory_background": "Background text on a single line...",
-  "regulatory_changes": [
-    {"change_area": "...", "old_qsr_requirement": "...", "new_qmsr_requirement": "...", "impact_level": "CRITICAL|HIGH|MEDIUM|LOW"}
-  ],
-  "gap_analysis_summary": "Summary text...",
-  "gap_items": [
-    {"gap_id": "GAP-001", "iso_clause": "4.2.4", "qsr_reference": "820.40", "gap_description": "...", "risk_rating": "CRITICAL|HIGH|MEDIUM|LOW", "current_state": "..."}
-  ],
-  "total_gaps": "23",
-  "critical_gaps": "3",
-  "high_risk_gaps": "8",
-  "medium_low_gaps": "12",
-  "exemption_removal_impact": "Impact text...",
-  "inspectable_records": [
-    {"record_type": "...", "previous_status": "...", "new_status": "...", "compliance_action": "..."}
-  ],
-  "recommendations": "Recommendations text...",
-  "prepared_date": "2026-03-29",
-  "reviewed_date": "2026-03-29",
-  "approved_date": "2026-03-29"
-}
-```
-
-**QMS Document Control Report** (template `2168102733402`):
-- `generated_file_name`: `QMS_Document_Control_Report_<N>` (incrementing number).
-- All fields required:
-```json
-{
-  "report_id": "RPT-DOC-2026-001",
-  "company_name": "MedTech Precision Devices, Inc.",
-  "generated_by": "Name, Title",
-  "report_date": "2026-03-30",
-  "reporting_period": "January 2024 - March 2026",
-  "total_documents": "1840",
-  "documents_requiring_update": "23",
-  "classification": "CONTROLLED",
-  "document_control_summary": "Summary of document control findings...",
-  "total_controlled_documents": "1840",
-  "docs_referencing_old_qsr": "62",
-  "docs_requiring_iso_mapping": "23",
-  "docs_revised_for_qmsr": "20",
-  "docs_pending_review": "2",
-  "docs_in_draft": "1",
-  "docs_effective": "1837",
-  "documents": [
-    {"document_id": "DOC-QMS-001", "title": "...", "document_type": "QM|SOP|WI|MDF|VP|RPT", "iso_reference": "4.2.2", "revision_number": "08", "status": "EFFECTIVE|DRAFT|UNDER_REVIEW", "effective_date": "2026-02-01"}
-  ],
-  "revision_requirement_summary": "Summary of documents requiring revision...",
-  "documents_requiring_revision": [
-    {"document_id": "DOC-QMS-001", "title": "...", "change_reason": "...", "capa_reference": "", "target_date": "2026-01-15"}
-  ],
-  "document_type_summary": [
-    {"document_type": "Quality Manual (QM)", "count": "1", "percentage": "0.05%", "last_review_date": "2026-01-15"}
-  ],
-  "compliance_notes": "Compliance notes text..."
-}
-```
-
-**CAPA Completeness Report** (template `2168100906700`):
-- `generated_file_name`: `CAPA_Completeness_Report_<N>` (incrementing number).
-- All fields required:
-```json
-{
-  "report_id": "RPT-CAPA-2026-001",
-  "company_name": "MedTech Precision Devices, Inc.",
-  "prepared_by": "Name, Title",
-  "report_date": "2026-03-30",
-  "assessment_period": "March 2024 - March 2026 (24 months)",
-  "total_capas_assessed": "342",
-  "iso_reference": "ISO 13485:2016 §8.5.2, §8.5.3",
-  "classification": "CONFIDENTIAL",
-  "executive_summary": "Summary of CAPA findings...",
-  "total_capas": "342",
-  "open_capas": "47",
-  "closed_capas": "295",
-  "capas_corrective": "198",
-  "capas_preventive": "144",
-  "capas_missing_verification": "14",
-  "capas_past_due": "3",
-  "avg_closure_days": "62",
-  "capa_records": [
-    {"notification_number": "000300000001", "notification_type": "Q1 - Customer", "description": "...", "priority": "1", "status": "COMPLETED", "plant": "1000", "creation_date": "2025-08-12"}
-  ],
-  "capa_tasks": [
-    {"capa_number": "000300000001", "task_description": "...", "responsible_person": "Name", "task_type": "CORRECTIVE", "task_status": "COMPLETED", "completion_date": "2025-08-26"}
-  ],
-  "missing_verification_summary": "Summary of CAPAs missing verification...",
-  "capas_missing_verification": [
-    {"capa_number": "000300000007", "description": "...", "closed_date": "2025-06-15", "days_since_closure": "245", "assigned_to": "Name"}
-  ],
-  "compliance_assessment": "Overall compliance assessment...",
-  "recommendations": "Recommendations..."
-}
-```
-
-**Remediation Plan** — just call `generate_remediation_plan()` with no arguments. It does everything automatically.
-""",
+NEVER ask the user for details. Just call the tool and return the result.
+Keep responses SHORT — one summary sentence and the report link. NEVER include job IDs or batch IDs.""",
         tools=[
-            find_ai_agent_by_name,
-            ask_ai_agent,
-            generate_document,
+            run_gap_analysis,
+            run_sop_impact_analysis,
+            run_capa_report,
             generate_remediation_plan,
         ],
     )
@@ -237,15 +95,15 @@ def create_box_agent() -> LlmAgent:
             "An agent that manages controlled documents in Box for medical device "
             "quality management, including search, AI-powered Q&A, and CRUD operations."
         ),
-        instruction="""You route requests to specialized sub-agents. Do NOT answer directly — always delegate. NEVER ask the user for more details — use the tools to find the information.
+        instruction="""You route requests to specialized sub-agents. Do NOT answer directly — always delegate. NEVER ask the user for more details.
 
 - **box_document_agent** — file search, read, folder ops, Box AI Q&A
-- **box_regulatory_docgen_agent** — regulatory analysis, gap analysis, SOP impact, exemption removal, AND report generation from DocGen templates. For remediation plans, this agent automatically reads documents from the Generated Reports folder (371602616529) — no user input needed.
+- **box_workflow_agent** — gap analysis, SOP impact analysis, CAPA reports, remediation plans (single-call automated workflows)
 
 Keep responses SHORT. Use clickable Box links. NEVER include job IDs or batch IDs.""",
         tools=[],
         sub_agents=[
             _create_document_agent(model),
-            _create_regulatory_docgen_agent(model),
+            _create_workflow_agent(model),
         ],
     )
