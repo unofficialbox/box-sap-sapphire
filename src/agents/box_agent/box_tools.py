@@ -1070,7 +1070,7 @@ def run_sop_impact_analysis(
         # Step 1: Query the Controlled Document AI Agent
         logger.info("run_sop_impact_analysis: querying Controlled Document AI Agent")
         ai_result = box_ai_ask_hub(
-            client, hub_id="943271141", prompt=_SOP_IMPACT_PROMPT, ai_agent_id="66020900",
+            client, hub_id="371602616529", prompt=_SOP_IMPACT_PROMPT, ai_agent_id="66020900",
         )
         ai_answer = ai_result.get("answer", "")
         if not ai_answer:
