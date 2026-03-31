@@ -1219,23 +1219,19 @@ def run_capa_report(
         today = date.today().isoformat()
 
         # Parse structured data from the SAP data string
+        import re
         notifications = []
         tasks = []
+
+        # Try JSON first
         try:
             import json as _json
-            import re
-            # The sap_data may be JSON or contain JSON fragments
             json_match = re.search(r'\{[\s\S]*\}', sap_data)
             if json_match:
                 parsed = _json.loads(json_match.group())
-                # Handle various shapes the orchestrator might pass
                 if isinstance(parsed, dict):
                     notifications = parsed.get("notifications", [])
                     tasks = parsed.get("tasks", [])
-                    # Also check for nested structures
-                    if not notifications and "count" in parsed:
-                        notifications = parsed.get("notifications", [])
-            # Try parsing as a list
             if not notifications:
                 list_match = re.search(r'\[[\s\S]*\]', sap_data)
                 if list_match:
@@ -1247,6 +1243,30 @@ def run_capa_report(
                             tasks = parsed_list
         except Exception as parse_err:
             logger.warning("run_capa_report: could not parse SAP data as JSON: %s", parse_err)
+
+        # Fallback: parse CSV/plain-text lines (comma-separated notification rows)
+        # Format seen from orchestrator: "000300000007, Q1, description, 1, IN_PROCESS, FG-00045123, 2026-01-08"
+        if not notifications:
+            lines = sap_data.strip().splitlines()
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                # Match lines starting with a notification number (9+ digits)
+                if re.match(r'^\d{9,}', line):
+                    parts = [p.strip() for p in line.split(",")]
+                    if len(parts) >= 5:
+                        notifications.append({
+                            "QualityNotification": parts[0],
+                            "NotificationType": parts[1] if len(parts) > 1 else "",
+                            "NotificationText": parts[2] if len(parts) > 2 else "",
+                            "NotificationPriority": parts[3] if len(parts) > 3 else "",
+                            "NotificationStatus": parts[4] if len(parts) > 4 else "",
+                            "Material": parts[5] if len(parts) > 5 else "",
+                            "CreationDate": parts[6] if len(parts) > 6 else "",
+                        })
+            if notifications:
+                logger.info("run_capa_report: parsed %d notifications from plain text", len(notifications))
 
         # Compute statistics from parsed notifications
         total = len(notifications)
