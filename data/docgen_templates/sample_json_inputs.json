@@ -212,7 +212,7 @@
     "total_capas_assessed": "342",
     "iso_reference": "ISO 13485:2016 §8.5.2, §8.5.3",
     "classification": "CONFIDENTIAL",
-    "executive_summary": "This report assesses the completeness of all Corrective and Preventive Actions (CAPAs) within the 24-month assessment period in preparation for FDA QMSR compliance. Of 342 CAPAs assessed, 14 are missing effectiveness verification — a critical finding given the QMSR's enhanced inspection requirements under ISO 13485:2016.",
+    "executive_summary": "This report assesses the completeness of all Corrective and Preventive Actions (CAPAs) within the 24-month assessment period in preparation for FDA QMSR compliance. Of 342 CAPAs assessed, 295 have been closed and 47 remain open. The CAPA population includes 198 corrective actions and 144 preventive actions. 14 closed CAPAs are missing required effectiveness verification — a critical finding given the QMSR's enhanced inspection requirements under ISO 13485:2016. 3 CAPAs are past due, and the average closure time is 62 days.",
     "total_capas": "342",
     "open_capas": "47",
     "closed_capas": "295",
