@@ -42,9 +42,9 @@ def main():
     past_due = 3
     avg_closure_days = 62
 
-    # Build CAPA records for the template (up to 5)
+    # Build CAPA records for the template (all parsed notifications)
     capa_records = []
-    for n in notifications[:5]:
+    for n in notifications:
         capa_records.append({
             "notification_number": str(n.get("QualityNotification", "")),
             "notification_type": str(n.get("NotificationType", "")),
@@ -55,9 +55,9 @@ def main():
             "creation_date": str(n.get("CreationDate", today)),
         })
 
-    # Build CAPA tasks for the template (up to 5)
+    # Build CAPA tasks for the template (all parsed tasks)
     capa_tasks = []
-    for t in tasks[:5]:
+    for t in tasks:
         capa_tasks.append({
             "capa_number": str(t.get("QualityNotification", "")),
             "task_description": str(t.get("TaskText", "")),
