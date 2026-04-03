@@ -13,7 +13,7 @@ sleep 1
 
 # Start SAP Agent
 echo "Starting SAP Agent on port $SAP_PORT..."
-BIGTABLE_EMULATOR_HOST=localhost:8086 uv run uvicorn src.agents.sap_agent.__main__:a2a_app \
+uv run uvicorn src.agents.sap_agent.__main__:a2a_app \
   --host 0.0.0.0 --port $SAP_PORT --reload &
 
 # Start Box Agent

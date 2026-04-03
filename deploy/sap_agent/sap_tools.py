@@ -1,6 +1,6 @@
 """SAP Agent tool functions for quality management queries.
 
-Each tool queries BigTable (emulating SAP S/4HANA QM data) and returns
+Each tool queries BigQuery (emulating SAP S/4HANA QM data) and returns
 structured results following the A2A agent tool convention.
 """
 
@@ -9,14 +9,14 @@ from typing import Any, Optional
 
 from google.adk.tools.tool_context import ToolContext
 
-from .bigtable_client import BigTableClient
+from .bigquery_client import BigQueryClient
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def _get_client() -> BigTableClient:
-    return BigTableClient.get_instance()
+def _get_client() -> BigQueryClient:
+    return BigQueryClient.get_instance()
 
 
 def get_quality_notifications(

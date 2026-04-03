@@ -2,4 +2,4 @@ google-adk>=1.13.0
 a2a-sdk
 litellm>=1.76.1
 python-dotenv
-google-cloud-bigtable>=2.26.0
+google-cloud-bigquery>=3.25.0

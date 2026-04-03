@@ -14,7 +14,7 @@ COPY --chown=myuser:myuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy agent source into ADK package structure
-COPY --chown=myuser:myuser agent.py sap_tools.py bigtable_client.py agent.json __init__.py ./agents/sap_agent/
+COPY --chown=myuser:myuser agent.py sap_tools.py bigquery_client.py agent.json __init__.py ./agents/sap_agent/
 
 ENV PORT=8080
 EXPOSE 8080

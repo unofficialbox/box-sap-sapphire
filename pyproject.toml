@@ -14,7 +14,7 @@ dependencies = [
     "box-sdk-gen",
     "boxsdk>=3.14.0",
     "fastmcp",
-    "google-cloud-bigtable>=2.26.0",
+    "google-cloud-bigquery>=3.25.0",
     "click",
     "uvicorn",
     "fpdf2>=2.8.7",

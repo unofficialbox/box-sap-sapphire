@@ -10,7 +10,7 @@ Multi-agent A2A system for SAP Sapphire conference demo. Showcases SAP S/4HANA Q
 
 ```
 QMS Orchestrator :8000 (qms_orchestrator)
-├── query_sap ──→ SAP Agent :8001 (sap_agent) → BigTable Emulator :8086
+├── query_sap ──→ SAP Agent :8001 (sap_agent) → BigQuery (sap_qm dataset)
 └── query_box ──→ Box Agent :8002 (box_agent) → Box API (CCG Auth)
 ```
 
@@ -24,15 +24,15 @@ QMS Orchestrator :8000 (qms_orchestrator)
 
 ```bash
 # Setup
-docker compose up -d                    # Start BigTable emulator
 uv sync                                 # Install dependencies
 cp .env.sample .env                     # Configure host env
 cp src/agents/sap_agent/.env.sample src/agents/sap_agent/.env
 cp src/agents/box_agent/.env.sample src/agents/box_agent/.env
-python scripts/load_bigtable.py         # Load JSONL data into BigTable
+gcloud auth application-default login   # Authenticate for BigQuery
+python scripts/load_bigquery.py         # Load JSONL data into BigQuery (one-time)
 
 # Run agents (each in separate terminal)
-BIGTABLE_EMULATOR_HOST=localhost:8086 uvicorn src.agents.sap_agent.__main__:a2a_app --host 0.0.0.0 --port 8001 --reload
+uvicorn src.agents.sap_agent.__main__:a2a_app --host 0.0.0.0 --port 8001 --reload
 uvicorn src.agents.box_agent.__main__:a2a_app --host 0.0.0.0 --port 8002 --reload
 uvicorn main:app --reload               # Host agent on port 8000
 
@@ -51,13 +51,13 @@ python scripts/generate_pdfs.py
 main.py / qms_orchestrator.py / qms_orchestrator_tools.py / agent_executor.py  — QMS Orchestrator (port 8000)
 src/common/converters.py                     — Shared A2A ↔ GenAI part converters
 src/agents/sap_agent/                        — SAP QM agent (port 8001)
-    bigtable_client.py                       — BigTable query engine (singleton)
+    bigquery_client.py                       — BigQuery query engine (singleton)
     sap_tools.py                             — 5 tool functions
     sap_agent.py / sap_executor.py           — ADK agent + A2A executor
 src/agents/box_agent/                        — Box document agent (port 8002)
     box_tools.py                             — 11 tool functions (CRUD + AI)
     box_agent.py / box_executor.py           — ADK agent + A2A executor
-scripts/load_bigtable.py                     — JSONL → BigTable data loader
+scripts/load_bigquery.py                     — JSONL → BigQuery data loader
 scripts/generate_pdfs.py                     — Controlled document PDF generator
 data/*.jsonl                                 — Synthetic test data
 data/documents/*.pdf                         — Generated document PDFs
@@ -78,18 +78,16 @@ Each agent follows this pattern:
 
 QMS Orchestrator (`.env`): `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `LITELLM_MODEL`, `AGENT_URL`
 
-SAP agent adds: `BIGTABLE_EMULATOR_HOST`, `BIGTABLE_PROJECT_ID`, `BIGTABLE_INSTANCE_ID`, `APP_URL`
+SAP agent adds: `BIGQUERY_DATASET`, `APP_URL`
 
 Box agent adds: `BOX_CLIENT_ID`, `BOX_CLIENT_SECRET`, `BOX_SUBJECT_TYPE`, `BOX_SUBJECT_ID`, `BOX_ROOT_FOLDER_ID`, `APP_URL`
 
-## BigTable Schema
+## BigQuery Schema
 
-Row key design for prefix-scan queries:
-- **quality_notifications**: `{Type}#{Status}#{Number}` + secondary `MAT#{Material}#`, `SUP#{Supplier}#`
-- **quality_info_records**: `{Plant}#{Material}#{IntID}` + secondary `SUP#{Supplier}#`
-- **controlled_documents**: `{DocType}#{Status}#{DocID}` + secondary `CAPA#{Ref}#`, `ISO#{Clause}#`
-
-Single column family `data`. Nested arrays stored as JSON-serialized values.
+Dataset `sap_qm` with three tables (all STRING columns, nested arrays as JSON strings):
+- **quality_notifications**: 10 records — CAPAs with `_Item`, `_Task`, `_Activity` JSON fields
+- **quality_info_records**: 30 records — procurement quality data with `to_QltyFirstArticleInsp` JSON field
+- **controlled_documents**: 20 records — QMS document metadata (flat, no nested fields)
 
 ## Data Conventions
 
